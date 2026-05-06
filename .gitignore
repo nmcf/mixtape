@@ -6,8 +6,9 @@ __pycache__/
 
 # Data & Notebooks
 .ipynb_checkpoints
-*.csv
 *.pkl
 
 # Secrets
 .env
+
+.DS_Store
