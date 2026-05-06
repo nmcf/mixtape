@@ -1,0 +1,13 @@
+# Python
+env/
+venv/
+__pycache__/
+*.py[cod]
+
+# Data & Notebooks
+.ipynb_checkpoints
+*.csv
+*.pkl
+
+# Secrets
+.env
