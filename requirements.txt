@@ -1,0 +1,13 @@
+# Core Data Science
+pandas
+numpy
+scikit-learn
+scipy
+
+# Database Connection
+SQLAlchemy
+psycopg2-binary
+
+# Environment
+jupyterlab
+ipykernel
