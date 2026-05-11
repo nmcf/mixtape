@@ -3,11 +3,15 @@ pandas
 numpy
 scikit-learn
 scipy
+ipywidgets
+ydata-profiling
 
 # Database Connection
 SQLAlchemy
 psycopg2-binary
+duckdb
 
 # Environment
 jupyterlab
 ipykernel
+pyarrow
