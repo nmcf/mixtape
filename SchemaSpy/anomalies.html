@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>musicbrainz_db.musicbrainz</title>
+        <!-- Tell the browser to be responsive to screen width -->
+        <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+        <link rel="icon" type="image/png" sizes="16x16" href="favicon.png">
+        <!-- Bootstrap 3.3.5 -->
+        <link rel="stylesheet" href="bower/admin-lte/bootstrap/css/bootstrap.min.css">
+        <!-- Font Awesome -->
+        <link rel="stylesheet" href="bower/font-awesome/css/font-awesome.min.css">
+        <!-- Ionicons -->
+        <link rel="stylesheet" href="bower/ionicons/css/ionicons.min.css">
+        <!-- DataTables -->
+        <link rel="stylesheet" href="bower/datatables.net-bs/css/dataTables.bootstrap.min.css">
+        <link rel="stylesheet" href="bower/datatables.net-buttons-bs/css/buttons.bootstrap.min.css">
+        <!-- Code Mirror -->
+        <link rel="stylesheet" href="bower/codemirror/codemirror.css">
+        <!-- Fonts -->
+        <link href='fonts/indieflower/indie-flower.css' rel='stylesheet' type='text/css'>
+        <link href='fonts/source-sans-pro/source-sans-pro.css' rel='stylesheet' type='text/css'>
+
+        <!-- Theme style -->
+        <link rel="stylesheet" href="bower/admin-lte/dist/css/AdminLTE.min.css">
+        <!-- Salvattore -->
+        <link rel="stylesheet" href="bower/salvattore/salvattore.css">
+        <!-- AdminLTE Skins. Choose a skin from the css/skins
+           folder instead of downloading all of them to reduce the load. -->
+        <link rel="stylesheet" href="bower/admin-lte/dist/css/skins/_all-skins.min.css">
+        <!-- SchemaSpy -->
+        <link rel="stylesheet" href="schemaSpy.css">
+
+        <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+        <!--[if lt IE 9]>
+        <script src="bower/html5shiv/html5shiv.min.js"></script>
+        <script src="bower/respond/respond.min.js"></script>
+        <![endif]-->
+    </head>
+    <!-- ADD THE CLASS layout-top-nav TO REMOVE THE SIDEBAR. -->
+    <body class="hold-transition skin-blue layout-top-nav">
+        <div class="wrapper">
+            <header class="main-header">
+                <nav class="navbar navbar-static-top">
+                    <div class="container">
+                        <div class="navbar-header">
+                            <a href="index.html" class="navbar-brand"><b>musicbrainz_db</b></a><span class="navbar-brand" style="padding-left: 0">.musicbrainz</span>
+                            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse"><i class="fa fa-bars"></i></button>
+                        </div>
+
+                        <!-- Collect the nav links, forms, and other content for toggling -->
+                        <div class="collapse navbar-collapse pull-left" id="navbar-collapse">
+                            <ul class="nav navbar-nav">
+                                <li><a href="index.html">Tables <span class="sr-only">(current)</span></a></li>
+                                <li><a href="columns.html" title="All of the columns in the schema">Columns</a></li>
+                                <li><a href="constraints.html" title="Useful for diagnosing error messages that just give constraint name or number">Constraints</a></li>
+                                <li><a href="relationships.html" title="Diagram of table relationships">Relationships</a></li>
+                                <li><a href="orphans.html" title="View of tables with neither parents nor children">Orphan&nbsp;Tables</a></li>
+                                <li><a href="anomalies.html" title="Things that might not be quite right">Anomalies</a></li>
+                                <li><a href="routines.html" title="Procedures and functions">Routines</a></li>
+                            </ul>
+                        </div>
+                        <!-- /.navbar-collapse -->
+                        <!-- Navbar Right Menu -->
+                    </div>
+                    <!-- /.container-fluid -->
+                </nav>
+            </header>
+            <!-- Main content -->
+            <!-- Full Width Column -->
+            <div class="content-wrapper">
+                <!-- Content Header (Page header) -->
+                <section class="content-header">
+                    <h1>Anomalies</h1><br />
+                    <div class="callout callout-warning">
+                        <p>Things that might not be 'quite right' about your database and schema</p>
+                    </div>
+                </section>
+                <!-- Main content -->
+                <section class="content">
+                    <div class="row">
+                        <div class="col-md-6"> <!-- Implied Relationship -->
+                            <div class="box box-success">
+                                <div class="box-header with-border">
+                                    <h3 class="box-title">Columns whose name and type imply a relationship to another table's primary key</h3>
+                                    <div class="box-tools pull-right">
+                                        <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
+                                        <button type="button" class="btn btn-box-tool" data-widget="remove"><i class="fa fa-times"></i></button>
+                                    </div>
+                                </div>
+                                <div class="box-body">
+                                    <table
+                                            id="implied_constraint"
+                                            class="table table-bordered table-striped dataTable"
+                                            role="grid"
+                                            data-paging="true"
+                                            data-page-length="10"
+                                            data-length-change="false">
+                                        <thead align='left'>
+                                            <tr>
+                                                <th>Child Column</th>
+                                                <th>Implied Parent Column</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><a href='tables/alternative_medium.html'>alternative_medium</a>.[medium]</td>
+                                                <td><a href='tables/medium_index.html'>medium_index</a>.[medium]</td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/area_alias.html'>area_alias</a>.[area]</td>
+                                                <td><a href='tables/country_area.html'>country_area</a>.[area]</td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/area_attribute.html'>area_attribute</a>.[area]</td>
+                                                <td><a href='tables/country_area.html'>country_area</a>.[area]</td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/artist.html'>artist</a>.[area]</td>
+                                                <td><a href='tables/country_area.html'>country_area</a>.[area]</td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/artist.html'>artist</a>.[begin_area]</td>
+                                                <td><a href='tables/country_area.html'>country_area</a>.[area]</td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/artist.html'>artist</a>.[end_area]</td>
+                                                <td><a href='tables/country_area.html'>country_area</a>.[area]</td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/artist_release_nonva.html'>artist_release_nonva</a>.[country_code]</td>
+                                                <td><a href='tables/iso_3166_1.html'>iso_3166_1</a>.[code]</td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/artist_release_va.html'>artist_release_va</a>.[country_code]</td>
+                                                <td><a href='tables/iso_3166_1.html'>iso_3166_1</a>.[code]</td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/edit_note.html'>edit_note</a>.[edit]</td>
+                                                <td><a href='tables/edit_data.html'>edit_data</a>.[edit]</td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/editor.html'>editor</a>.[area]</td>
+                                                <td><a href='tables/country_area.html'>country_area</a>.[area]</td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/iso_3166_1.html'>iso_3166_1</a>.[area]</td>
+                                                <td><a href='tables/country_area.html'>country_area</a>.[area]</td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/iso_3166_2.html'>iso_3166_2</a>.[area]</td>
+                                                <td><a href='tables/country_area.html'>country_area</a>.[area]</td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/iso_3166_3.html'>iso_3166_3</a>.[area]</td>
+                                                <td><a href='tables/country_area.html'>country_area</a>.[area]</td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/isrc.html'>isrc</a>.[recording]</td>
+                                                <td><a href='tables/recording_first_release_date.html'>recording_first_release_date</a>.[recording]</td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/label.html'>label</a>.[area]</td>
+                                                <td><a href='tables/country_area.html'>country_area</a>.[area]</td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/link.html'>link</a>.[link_type]</td>
+                                                <td><a href='tables/orderable_link_type.html'>orderable_link_type</a>.[link_type]</td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/medium_attribute.html'>medium_attribute</a>.[medium]</td>
+                                                <td><a href='tables/medium_index.html'>medium_index</a>.[medium]</td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/medium_cdtoc.html'>medium_cdtoc</a>.[medium]</td>
+                                                <td><a href='tables/medium_index.html'>medium_index</a>.[medium]</td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/place.html'>place</a>.[area]</td>
+                                                <td><a href='tables/country_area.html'>country_area</a>.[area]</td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/recording_alias.html'>recording_alias</a>.[recording]</td>
+                                                <td><a href='tables/recording_first_release_date.html'>recording_first_release_date</a>.[recording]</td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/recording_attribute.html'>recording_attribute</a>.[recording]</td>
+                                                <td><a href='tables/recording_first_release_date.html'>recording_first_release_date</a>.[recording]</td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/script.html'>script</a>.[iso_code]</td>
+                                                <td><a href='tables/iso_3166_3.html'>iso_3166_3</a>.[code]</td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/track.html'>track</a>.[medium]</td>
+                                                <td><a href='tables/medium_index.html'>medium_index</a>.[medium]</td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/track.html'>track</a>.[recording]</td>
+                                                <td><a href='tables/recording_first_release_date.html'>recording_first_release_date</a>.[recording]</td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/vote.html'>vote</a>.[edit]</td>
+                                                <td><a href='tables/edit_data.html'>edit_data</a>.[edit]</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6"> <!-- Tables without indexes -->
+                            <div class="box box-danger">
+                                <div class="box-header with-border">
+                                    <h3 class="box-title">Tables without indexes</h3>
+                                    <div class="box-tools pull-right">
+                                        <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
+                                        <button type="button" class="btn btn-box-tool" data-widget="remove"><i class="fa fa-times"></i></button>
+                                    </div>
+                                </div>
+                                <div class="box-body">
+                                    <table
+                                            id="un_indexed_table"
+                                            class="table table-bordered table-striped dataTable"
+                                            role="grid"
+                                            data-paging="true"
+                                            data-page-length="10"
+                                            data-length-change="false">
+                                        <thead align='left'>
+                                            <tr>
+                                                <th>Table</th>
+                                                <th>Rows</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td colspan="3">Anomaly not detected</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6"> <!-- Tables that contain a single column -->
+                            <div class="box box-info">
+                                <div class="box-header with-border">
+                                    <h3 class="box-title">Tables that contain a single column</h3>
+                                    <div class="box-tools pull-right">
+                                        <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
+                                        <button type="button" class="btn btn-box-tool" data-widget="remove"><i class="fa fa-times"></i></button>
+                                    </div>
+                                </div>
+                                <div class="box-body">
+                                    <table
+                                            id="single_column_table"
+                                            class="table table-bordered table-striped dataTable"
+                                            role="grid"
+                                            data-paging="true"
+                                            data-page-length="10"
+                                            data-length-change="false">
+                                        <thead align='left'>
+                                            <tr>
+                                                <th>Table</th>
+                                                <th>Column</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><a href='tables/artist_release_group_pending_update.html'>artist_release_group_pending_update</a></td>
+                                                <td>release_group</td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/artist_release_pending_update.html'>artist_release_pending_update</a></td>
+                                                <td>release</td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/country_area.html'>country_area</a></td>
+                                                <td>area</td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/link_creditable_attribute_type.html'>link_creditable_attribute_type</a></td>
+                                                <td>attribute_type</td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/link_text_attribute_type.html'>link_text_attribute_type</a></td>
+                                                <td>attribute_type</td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/old_editor_name.html'>old_editor_name</a></td>
+                                                <td>name</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6"> <!-- Tables with incrementing column names, potentially indicating denormalization -->
+                            <div class="box box-danger">
+                                <div class="box-header with-border">
+                                    <h3 class="box-title">Tables with incrementing column names, potentially indicating denormalization</h3>
+                                    <div class="box-tools pull-right">
+                                        <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
+                                        <button type="button" class="btn btn-box-tool" data-widget="remove"><i class="fa fa-times"></i></button>
+                                    </div>
+                                </div>
+                                <div class="box-body">
+                                    <table
+                                            id="inc_column_table"
+                                            class="table table-bordered table-striped dataTable"
+                                            role="grid"
+                                            data-paging="true"
+                                            data-page-length="10"
+                                            data-length-change="false">
+                                        <thead align='left'>
+                                            <tr>
+                                                <th>Table</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><a href='tables/autoeditor_election.html'>autoeditor_election</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_area_area.html'>l_area_area</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_area_artist.html'>l_area_artist</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_area_event.html'>l_area_event</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_area_genre.html'>l_area_genre</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_area_instrument.html'>l_area_instrument</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_area_label.html'>l_area_label</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_area_mood.html'>l_area_mood</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_area_place.html'>l_area_place</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_area_recording.html'>l_area_recording</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_area_release.html'>l_area_release</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_area_release_group.html'>l_area_release_group</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_area_series.html'>l_area_series</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_area_url.html'>l_area_url</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_area_work.html'>l_area_work</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_artist_artist.html'>l_artist_artist</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_artist_event.html'>l_artist_event</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_artist_genre.html'>l_artist_genre</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_artist_instrument.html'>l_artist_instrument</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_artist_label.html'>l_artist_label</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_artist_mood.html'>l_artist_mood</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_artist_place.html'>l_artist_place</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_artist_recording.html'>l_artist_recording</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_artist_release.html'>l_artist_release</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_artist_release_group.html'>l_artist_release_group</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_artist_series.html'>l_artist_series</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_artist_url.html'>l_artist_url</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_artist_work.html'>l_artist_work</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_event_event.html'>l_event_event</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_event_genre.html'>l_event_genre</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_event_instrument.html'>l_event_instrument</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_event_label.html'>l_event_label</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_event_mood.html'>l_event_mood</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_event_place.html'>l_event_place</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_event_recording.html'>l_event_recording</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_event_release.html'>l_event_release</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_event_release_group.html'>l_event_release_group</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_event_series.html'>l_event_series</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_event_url.html'>l_event_url</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_event_work.html'>l_event_work</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_genre_genre.html'>l_genre_genre</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_genre_instrument.html'>l_genre_instrument</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_genre_label.html'>l_genre_label</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_genre_mood.html'>l_genre_mood</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_genre_place.html'>l_genre_place</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_genre_recording.html'>l_genre_recording</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_genre_release.html'>l_genre_release</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_genre_release_group.html'>l_genre_release_group</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_genre_series.html'>l_genre_series</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_genre_url.html'>l_genre_url</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_genre_work.html'>l_genre_work</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_instrument_instrument.html'>l_instrument_instrument</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_instrument_label.html'>l_instrument_label</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_instrument_mood.html'>l_instrument_mood</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_instrument_place.html'>l_instrument_place</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_instrument_recording.html'>l_instrument_recording</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_instrument_release.html'>l_instrument_release</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_instrument_release_group.html'>l_instrument_release_group</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_instrument_series.html'>l_instrument_series</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_instrument_url.html'>l_instrument_url</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_instrument_work.html'>l_instrument_work</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_label_label.html'>l_label_label</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_label_mood.html'>l_label_mood</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_label_place.html'>l_label_place</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_label_recording.html'>l_label_recording</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_label_release.html'>l_label_release</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_label_release_group.html'>l_label_release_group</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_label_series.html'>l_label_series</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_label_url.html'>l_label_url</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_label_work.html'>l_label_work</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_mood_mood.html'>l_mood_mood</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_mood_place.html'>l_mood_place</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_mood_recording.html'>l_mood_recording</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_mood_release.html'>l_mood_release</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_mood_release_group.html'>l_mood_release_group</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_mood_series.html'>l_mood_series</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_mood_url.html'>l_mood_url</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_mood_work.html'>l_mood_work</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_place_place.html'>l_place_place</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_place_recording.html'>l_place_recording</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_place_release.html'>l_place_release</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_place_release_group.html'>l_place_release_group</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_place_series.html'>l_place_series</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_place_url.html'>l_place_url</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_place_work.html'>l_place_work</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_recording_recording.html'>l_recording_recording</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_recording_release.html'>l_recording_release</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_recording_release_group.html'>l_recording_release_group</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_recording_series.html'>l_recording_series</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_recording_url.html'>l_recording_url</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_recording_work.html'>l_recording_work</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_release_group_release_group.html'>l_release_group_release_group</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_release_group_series.html'>l_release_group_series</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_release_group_url.html'>l_release_group_url</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_release_group_work.html'>l_release_group_work</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_release_release.html'>l_release_release</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_release_release_group.html'>l_release_release_group</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_release_series.html'>l_release_series</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_release_url.html'>l_release_url</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_release_work.html'>l_release_work</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_series_series.html'>l_series_series</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_series_url.html'>l_series_url</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_series_work.html'>l_series_work</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_url_url.html'>l_url_url</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_url_work.html'>l_url_work</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/l_work_work.html'>l_work_work</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/link_type.html'>link_type</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href='tables/tag_relation.html'>tag_relation</a></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6"> <!-- Columns whose default value is the word 'NULL' or 'null', but the SQL NULL value may have been intended -->
+                            <div class="box box-primary">
+                                <div class="box-header with-border">
+                                    <h3 class="box-title" title="Columns whose default value is the word 'NULL' or 'null', but the SQL NULL value may have been intende">Columns whose default value is the word 'NULL' or 'null'</h3>
+                                    <div class="box-tools pull-right">
+                                        <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
+                                        <button type="button" class="btn btn-box-tool" data-widget="remove"><i class="fa fa-times"></i></button>
+                                    </div>
+                                </div>
+                                <div class="box-body">
+                                    <table
+                                            id="null_string_table"
+                                            class="table table-bordered table-striped dataTable"
+                                            role="grid"
+                                            data-paging="true"
+                                            data-page-length="10"
+                                            data-length-change="false">
+                                        <thead align='left'>
+                                            <tr>
+                                                <th>Table</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td colspan="3">Anomaly not detected</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+            <!-- /.content-wrapper -->
+            <footer class="main-footer">
+                <div>
+                    <div class="pull-right hidden-xs">
+                        <a href="https://github.com/schemaspy/schemaspy" title="GitHub for SchemaSpy"><i class="fa fa-github-square fa-2x"></i></a>
+                        <a href="http://stackoverflow.com/questions/tagged/schemaspy" title="StackOverflow for SchemaSpy"><i class="fa fa-stack-overflow fa-2x"></i></a>
+                    </div>
+                    <strong>Generated by <a href="http://schemaspy.org/" class="logo-text"><i class="fa fa-database"></i> SchemaSpy 7.0.2</a></strong>
+                </div>
+                <!-- /.container -->
+            </footer>
+        </div>
+        <!-- ./wrapper -->
+
+        <!-- jQuery 2.2.3 -->
+        <script src="bower/admin-lte/plugins/jQuery/jquery-2.2.3.min.js"></script>
+        <script src="bower/admin-lte/plugins/jQueryUI/jquery-ui.min.js"></script>
+        <!-- Bootstrap 3.3.5 -->
+        <script src="bower/admin-lte/bootstrap/js/bootstrap.min.js"></script>
+        <!-- DataTables -->
+        <script src="bower/datatables.net/jquery.dataTables.min.js"></script>
+        <script src="bower/datatables.net-bs/js/dataTables.bootstrap.min.js"></script>
+        <script src="bower/datatables.net-buttons/dataTables.buttons.min.js"></script>
+        <script src="bower/datatables.net-buttons-bs/js/buttons.bootstrap.min.js"></script>
+        <script src="bower/datatables.net-buttons/buttons.html5.min.js"></script>
+        <script src="bower/datatables.net-buttons/buttons.print.min.js"></script>
+        <script src="bower/datatables.net-buttons/buttons.colVis.min.js"></script>
+        <!-- SheetJS -->
+        <script src="bower/js-xlsx/xlsx.full.min.js"></script>
+        <!-- pdfmake -->
+        <script src="bower/pdfmake/pdfmake.min.js"></script>
+        <script src="bower/pdfmake/vfs_fonts.js"></script>
+        <!-- SlimScroll -->
+        <script src="bower/admin-lte/plugins/slimScroll/jquery.slimscroll.min.js"></script>
+        <!-- FastClick -->
+        <script src="bower/admin-lte/plugins/fastclick/fastclick.js"></script>
+        <!-- Salvattore -->
+        <script src="bower/salvattore/salvattore.min.js"></script>
+        <!-- AnchorJS -->
+        <script src="bower/anchor-js/anchor.min.js"></script>
+        <!-- CodeMirror -->
+        <script src="bower/codemirror/codemirror.js"></script>
+        <script src="bower/codemirror/sql.js"></script>
+        <!-- AdminLTE App -->
+        <script src="bower/admin-lte/dist/js/app.min.js"></script>
+        <script src="anomalies.js"></script>
+        <script src="schemaSpy.js"></script>
+    </body>
+</html>
