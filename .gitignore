@@ -3,6 +3,7 @@ env/
 venv/
 __pycache__/
 *.py[cod]
+.python-version
 
 # Data & Notebooks
 .ipynb_checkpoints
@@ -10,5 +11,6 @@ __pycache__/
 
 # Secrets
 .env
+.venv
 
 .DS_Store
