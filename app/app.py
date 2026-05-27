@@ -85,16 +85,23 @@ if artist_query:
         artists = matches['artist_name'].dropna().unique()
         selected_artist = st.selectbox("Select artist", sorted(artists))
 
-        artist_albums = matches[matches['artist_name'] == selected_artist]
+        artist_albums = matches[
+            (matches['artist_name'] == selected_artist) &
+            (matches.index.isin(album_id_to_row))
+        ]
         album_options = {row['album_name']: album_id for album_id, row in artist_albums.iterrows()}
-        selected_album_name = st.selectbox("Select album", sorted(album_options.keys()))
 
-        if selected_album_name:
-            album_id = album_options[selected_album_name]
-            recs = recommend(album_id, 10, model, X_knn_norm, album_ids_annotated, album_id_to_row, lookup)
+        if not album_options:
+            st.info("No recommendable albums found for this artist.")
+        else:
+            selected_album_name = st.selectbox("Select album", sorted(album_options.keys()))
 
-            if recs is None or recs.empty:
-                st.info("No recommendations available for this album.")
-            else:
-                st.subheader("You might also like")
-                st.dataframe(recs, use_container_width=True, hide_index=True)
+            if selected_album_name:
+                album_id = album_options[selected_album_name]
+                recs = recommend(album_id, 10, model, X_knn_norm, album_ids_annotated, album_id_to_row, lookup)
+
+                if recs is None or recs.empty:
+                    st.info("No recommendations available for this album.")
+                else:
+                    st.subheader("You might also like")
+                    st.dataframe(recs, use_container_width=True, hide_index=True)
