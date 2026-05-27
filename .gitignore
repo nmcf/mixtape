@@ -8,6 +8,7 @@ __pycache__/
 # Data & Notebooks
 .ipynb_checkpoints
 *.pkl
+data/model/
 
 # Secrets
 .env
