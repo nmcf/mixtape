@@ -1,43 +1,100 @@
 # mixtape
 
-What is
-We want to connect music lovers with Albums and Artists.
-Based on what you input we will output a list fo albums that you might want to check out.
+Album recommendation engine built on the MusicBrainz database. Enter an artist you love, pick one of their albums, and get 10 similar albums recommended by a KNN model trained on community tags, ratings, and label data.
 
-## MVP Features
-Input: list of Bands
-Output: List of albums
+## How it works
 
-## V2 Features
+1. **Data import** — a DuckDB notebook extracts artist/album data from a local MusicBrainz PostgreSQL instance and saves it as Parquet files.
+2. **Datasets** — a second notebook loads the Parquet files into pandas DataFrames, enriches them with aggregated tags and ratings, and pickles the results.
+3. **Features** — sparse feature matrices are built from tags, labels, types, and Bayesian-weighted ratings.
+4. **Model** — a cosine-distance KNN model is trained on the L2-normalised feature matrix.
+5. **App** — a Streamlit app serves recommendations in the browser.
 
-Web app - Steamlit
-Rating feedback loop
-Spotify API
-Playlist
-Filters:
-- year of release
-- Include listed Artist
-- Genre
-- Album name
+See the [`docs/`](docs/) folder for detailed documentation on each step.
 
-- id,artist_credit_id,artist_mbids,artist_credit_name,release_mbid,release_name,recording_mbid,recording_name,combined_lookup,score
+## Prerequisites
 
-Setup
-### 1. Database Prerequisite
-This project requires a local instance of the MusicBrainz database running in Docker. Ensure your container is active and accessible at `localhost:5432`.
+- Python 3.11+
+- A local MusicBrainz PostgreSQL database running at `localhost:5432` (only needed to re-import data; the Parquet files and trained model are checked in)
 
-### 2. Create Python Environment
-It is recommended to use a virtual environment to manage dependencies:
+## Quick start
+
+### 1. Clone the repo
 
 ```bash
-# Create the environment
+git clone <repo-url>
+cd mixtape
+```
+
+### 2. Create and activate a virtual environment
+
+```bash
 python3 -m venv env
+source env/bin/activate       # macOS/Linux
+# .\env\Scripts\activate      # Windows
+```
 
-# Activate the environment
-# On macOS/Linux:
-source env/bin/activate
-# On Windows:
-# .\env\Scripts\activate
+### 3. Install dependencies
 
-### 3. Install Dependencies
+```bash
 pip install -r requirements.txt
+```
+
+### 4. Run the app
+
+```bash
+streamlit run app/app.py
+```
+
+The app opens at **http://localhost:8501**.
+
+No database connection is needed to run the app — the pre-built model and Parquet files in `data/` are all that's required.
+
+## Re-building from scratch
+
+If you want to re-import data or retrain the model, you'll need a MusicBrainz PostgreSQL database. Copy `.env.example` to `.env` and fill in your credentials, then run the notebooks in order:
+
+```
+datasets/duckdb-parquet.ipynb       → imports Parquet files from Postgres
+datasets/parquet-dataframes.ipynb   → builds pickled DataFrames
+features/weights-ratings.ipynb      → explores Bayesian rating weighting
+features/features.ipynb             → builds sparse feature matrices
+model/knn.ipynb                     → trains and saves the KNN model
+```
+
+## Project layout
+
+```
+mixtape/
+├── app/
+│   └── app.py                  Streamlit app
+├── data/
+│   ├── *.parquet               Raw MusicBrainz exports
+│   ├── features/               Sparse feature matrices (.npz, .pkl)
+│   ├── model/                  Trained model artefacts
+│   └── pickles/                Intermediate DataFrames
+├── datasets/
+│   ├── duckdb-parquet.ipynb    Import: Postgres → Parquet
+│   └── parquet-dataframes.ipynb  Build: Parquet → DataFrames
+├── features/
+│   ├── features.ipynb          Assemble feature matrices
+│   ├── weights-ratings.ipynb   Rating weight exploration
+│   └── weights-tags.ipynb      Tag weight exploration
+├── model/
+│   ├── knn.ipynb               Train KNN model
+│   └── knn-query.ipynb         Query / evaluation notebook
+├── EDA/                        Exploratory data analysis notebooks
+├── docs/                       Step-by-step documentation
+└── requirements.txt
+```
+
+## Documentation
+
+| Doc | Contents |
+|-----|----------|
+| [01-data-import.md](docs/01-data-import.md) | Parquet table schemas and import logic |
+| [02-datasets.md](docs/02-datasets.md) | DataFrame construction and joins |
+| [03-features.md](docs/03-features.md) | Feature engineering and Bayesian ratings |
+| [04-model.md](docs/04-model.md) | KNN training pipeline |
+| [05-app.md](docs/05-app.md) | Streamlit app walkthrough |
+| [06-schema-diagrams.md](docs/06-schema-diagrams.md) | Mermaid schema and data flow diagrams |

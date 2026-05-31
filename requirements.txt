@@ -5,11 +5,17 @@ scikit-learn
 scipy
 ipywidgets
 ydata-profiling
+joblib
+matplotlib
+seaborn
 
 # Database Connection
 SQLAlchemy
 psycopg2-binary
 duckdb
+
+# App
+streamlit
 
 # Environment
 jupyterlab
