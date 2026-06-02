@@ -1,6 +1,6 @@
 # Datasets — Building DataFrames
 
-**Notebook:** `datasets/parquet-dataframes.ipynb`
+**Notebook:** `1-EDA/02-parquet-to-dataframes.ipynb`
 
 Loads the raw Parquet files into pandas DataFrames, enriches them, and persists the results as pickles for use in later stages.
 

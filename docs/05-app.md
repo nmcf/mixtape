@@ -1,6 +1,6 @@
 # Streamlit App
 
-**File:** `app/app.py`
+**File:** `3-app/app.py`
 
 A single-page Streamlit app that lets users search for an artist, select an album they like, and receive 10 similar album recommendations from the KNN model.
 
@@ -8,7 +8,7 @@ A single-page Streamlit app that lets users search for an artist, select an albu
 
 ```bash
 source env/bin/activate
-streamlit run app/app.py
+streamlit run 3-app/app.py
 ```
 
 The app opens at `http://localhost:8501` by default.

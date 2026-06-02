@@ -1,6 +1,6 @@
 # Feature Engineering
 
-**Notebooks:** `features/features.ipynb`, `features/weights-ratings.ipynb`, `features/weights-tags.ipynb`
+**Notebooks:** `2-Prototyping/01-feature-tags-labels.ipynb`, `2-Prototyping/02-feature-ratings.ipynb`, `2-Prototyping/03-feature-assembly.ipynb`
 
 Transforms the enriched DataFrames into sparse numeric matrices suitable for the KNN model.
 
@@ -60,6 +60,6 @@ X_knn = X_final_album_knn[:, col_nnz >= safe_threshold]
 
 ## Feature sparsity
 
-The resulting matrix is highly sparse. See `features/sparse_features_structural_analysis.png` for a visual breakdown of column nnz distributions across all four blocks.
+The resulting matrix is highly sparse. See `2-Prototyping/sparse_features_structural_analysis.png` for a visual breakdown of column nnz distributions across all four blocks.
 
 Albums with zero non-zero entries across the entire matrix are flagged as `has_features = False` and excluded from model training. At query time, selecting one of these albums returns "no recommendations available".

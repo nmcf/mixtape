@@ -3,16 +3,13 @@ pandas
 numpy
 scikit-learn
 scipy
-ipywidgets
 ydata-profiling
 joblib
 matplotlib
 seaborn
 
 # Database Connection
-SQLAlchemy
-psycopg2-binary
-duckdb
+duckdb  # only needed to re-import data from Postgres (1-EDA/01-postgres-to-parquet.ipynb)
 
 # App
 streamlit

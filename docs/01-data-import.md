@@ -1,6 +1,6 @@
 # Data Import — Parquet Tables
 
-**Notebook:** `datasets/duckdb-parquet.ipynb`
+**Notebook:** `1-EDA/01-postgres-to-parquet.ipynb`
 
 Connects to a local MusicBrainz PostgreSQL instance via DuckDB's Postgres extension, then exports filtered subsets to compressed Parquet files in `data/`.
 

@@ -1,6 +1,6 @@
 # Model — KNN Training & Query
 
-**Notebooks:** `model/knn.ipynb`, `model/knn-query.ipynb`
+**Notebooks:** `2-Prototyping/04-knn-training.ipynb`, `2-Prototyping/05-knn-query.ipynb`
 
 Trains a K-Nearest Neighbours model on the sparse feature matrix and provides a query interface for album recommendations.
 
