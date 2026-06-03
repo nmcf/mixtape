@@ -171,6 +171,20 @@ for name in BLOCK_FILES:
         key=f"w_{name}",
     )
 
+# An album can only be queried if it has signal in a block whose weight is > 0.
+# Combined query-norm² under the current weights = sum_b w_b² * ssq_b. Albums
+# where this is zero have nothing to match on, so they are hidden from the
+# album dropdown to avoid offering albums that would return no recommendations.
+combined_ssq = np.zeros(len(album_ids), dtype=np.float64)
+for name in BLOCK_FILES:
+    w2 = weights[name] ** 2
+    if w2:
+        combined_ssq += w2 * ssq[name]
+
+def is_queryable(album_id):
+    row = album_id_to_row.get(int(album_id))
+    return row is not None and combined_ssq[row] > 0
+
 # --- Main: artist → album → recommendations ---
 artist_query = st.text_input("Tell us your favourite artist")
 
@@ -183,14 +197,19 @@ if artist_query:
         artists = matches['artist_name'].dropna().unique()
         selected_artist = st.selectbox("Select artist", sorted(artists))
 
-        artist_albums = matches[
-            (matches['artist_name'] == selected_artist) &
-            (matches.index.isin(album_id_to_row))
-        ]
-        album_options = {row['album_name']: album_id for album_id, row in artist_albums.iterrows()}
+        artist_albums = matches[matches['artist_name'] == selected_artist]
+        album_options = {
+            row['album_name']: album_id
+            for album_id, row in artist_albums.iterrows()
+            if is_queryable(album_id)
+        }
 
         if not album_options:
-            st.info("No recommendable albums found for this artist.")
+            st.info(
+                "No recommendable albums for this artist under the current weights. "
+                "Try raising more sliders — sparser features (ratings, record label) "
+                "cover far fewer albums."
+            )
         else:
             selected_album_name = st.selectbox("Select album", sorted(album_options.keys()))
 
