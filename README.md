@@ -99,6 +99,7 @@ mixtape/
 │   ├── 10-feature-genre-tags.ipynb     Build: combined genre tag matrix
 │   ├── 11-knn-v2-training.ipynb        Train: v2 KNN model → data/model_v2/
 │   ├── 12-knn-v3-training.ipynb        Train: v3 KNN model → data/model_v3/
+│   ├── feature_charts/                 Saved feature diagnostic plots + regen script
 │   └── queries/                        SQL queries for DuckDB feature extraction
 ├── 3-app/
 │   ├── app.py                          Streamlit app (v1 only)
@@ -106,6 +107,7 @@ mixtape/
 │   └── app_v3.py                       Streamlit app (v1 vs v2 vs v3 comparison)
 ├── data/
 │   ├── mb_*.parquet                    Raw MusicBrainz exports
+│   ├── sql_feature_*.parquet           Country + track-stats feature exports
 │   ├── features/                       Sparse feature matrices (.npz, .pkl)
 │   ├── model/                          v1 model artefacts
 │   ├── model_v2/                       v2 model artefacts
