@@ -155,15 +155,21 @@ st.sidebar.caption(
     "Drag a feature up to make it matter more in the recommendations. "
     "Defaults match the trained v3 model."
 )
+def reset_weights():
+    # Runs as a callback before the sliders are rebuilt, so writing to their
+    # session-state keys here actually resets the widgets on the next run.
+    for name in BLOCK_FILES:
+        st.session_state[f"w_{name}"] = DEFAULT_WEIGHTS[name]
+
+st.sidebar.button("Reset to v3 defaults", on_click=reset_weights)
+
 weights = {}
 for name in BLOCK_FILES:
     weights[name] = st.sidebar.slider(
         BLOCK_LABELS[name],
         min_value=0.0, max_value=3.0, value=DEFAULT_WEIGHTS[name], step=0.1,
+        key=f"w_{name}",
     )
-
-if st.sidebar.button("Reset to v3 defaults"):
-    st.rerun()
 
 # --- Main: artist → album → recommendations ---
 artist_query = st.text_input("Tell us your favourite artist")
