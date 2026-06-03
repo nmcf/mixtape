@@ -151,7 +151,7 @@ def recommend(album_id, n, weights, blocks, album_ids, album_id_to_row, ssq, loo
 # App
 # ---------------------------------------------------------------------------
 
-st.title("mixtape — tune your mix")
+st.title("Mixtape — Dial in Your Sound")
 
 blocks, album_ids, album_id_to_row, ssq = load_blocks()
 lookup = load_lookup()
