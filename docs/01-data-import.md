@@ -38,7 +38,7 @@ Each table is exported with `COPY (...) TO '../data/<name>.parquet' (FORMAT 'PAR
 
 | File | Source | Key fields |
 |------|--------|------------|
-| `mb_album.parquet` | `musicbrainz.release_group` (type=1) | `id`, `name`, `artist_credit` |
+| `mb_album.parquet` | `valid_albums` (scoped: studio + official live + best-of) | `id`, `name`, `artist_credit` |
 | `mb_album_tag.parquet` | `release_group_tag` | `album_id`, `tag_id`, `tag_count` |
 | `mb_album_ratings.parquet` | `release_group_meta` | `album_id`, `rating`, `rating_count` |
 | `mb_album_country.parquet` | `release` + `release_country` | `album_id`, `language`, `country`, `album_year` |
@@ -125,7 +125,7 @@ erDiagram
 
 ## Notes
 
-- Only `release_group` records with `type = 1` (albums) are imported — singles, EPs, etc. are excluded.
+- The album scope is defined once in the `valid_albums` table and every album export joins to it. Scope: primary `type = 1` (Album), **must have an Official release** (drops bootlegs), and one of — studio (no secondary types), live (secondary type Live), or single-artist best-of (secondary type Compilation, non-VA). All other secondary types (Soundtrack, Remix, DJ-mix, Demo, …) and Various-Artists compilations are excluded. Validated: U2 goes from 1,004 → 45 release groups.
 - `mb_album_country` keeps only the earliest release per album (ordered by date ASC).
 - `mb_album_label` keeps only the label with the highest tag count per album.
 - `mb_artist_credit` excludes type=1 release groups (album artist credits are captured separately in `mb_album_artists`).
