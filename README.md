@@ -45,12 +45,12 @@ pip install -r requirements.txt
 ### 4. Run the app
 
 ```bash
-streamlit run 3-app/app_v3.py
+streamlit run 3-app/app_v3_weighted.py
 ```
 
-The app opens at **http://localhost:8501**.
+The app opens at **http://localhost:8501**. It serves recommendations from the v3 feature set and lets you reweight features (genre, record label, ratings, country, track stats) with sliders in real time.
 
-No database connection is needed — the pre-built models and Parquet files in `data/` are all that's required.
+No database connection is needed — the Parquet files and feature matrices in `data/` are all that's required. (The trained `.joblib` models used by the older comparison apps `app_v2.py`/`app_v3.py` are not committed; retrain them with the v2/v3 notebooks if you want those apps.)
 
 ## Re-building from scratch
 
@@ -104,15 +104,16 @@ mixtape/
 ├── 3-app/
 │   ├── app.py                          Streamlit app (v1 only)
 │   ├── app_v2.py                       Streamlit app (v1 vs v2 comparison)
-│   └── app_v3.py                       Streamlit app (v1 vs v2 vs v3 comparison)
+│   ├── app_v3.py                       Streamlit app (v1 vs v2 vs v3 comparison)
+│   └── app_v3_weighted.py              Streamlit app (v3 features, runtime weight sliders) — current
 ├── data/
-│   ├── mb_*.parquet                    Raw MusicBrainz exports
+│   ├── mb_*.parquet                    Raw MusicBrainz exports (committed)
 │   ├── sql_feature_*.parquet           Country + track-stats feature exports
-│   ├── features/                       Sparse feature matrices (.npz, .pkl)
-│   ├── model/                          v1 model artefacts
-│   ├── model_v2/                       v2 model artefacts
-│   ├── model_v3/                       v3 model artefacts
-│   └── pickles/                        Intermediate DataFrames
+│   ├── features/                       Sparse feature matrices + index (.npz, .pkl) (committed)
+│   ├── model/                          v1 model artefacts (gitignored)
+│   ├── model_v2/                       v2 model artefacts (gitignored)
+│   ├── model_v3/                       v3 model artefacts (gitignored)
+│   └── pickles/                        Intermediate DataFrames (gitignored)
 ├── docs/                               Step-by-step pipeline documentation
 └── requirements.txt
 ```

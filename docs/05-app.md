@@ -1,25 +1,48 @@
 # Streamlit App
 
-**Files:** `3-app/app.py` (v1), `3-app/app_v2.py` (v1 vs v2), `3-app/app_v3.py` (v1 vs v2 vs v3)
+**Files:** `3-app/app.py` (v1), `3-app/app_v2.py` (v1 vs v2), `3-app/app_v3.py` (v1 vs v2 vs v3), `3-app/app_v3_weighted.py` (v3 with weight sliders)
 
-Three app versions exist. `app_v3.py` is the current active app.
+`app_v3_weighted.py` is the current active app.
 
 ## Running the app
 
 ```bash
 source env/bin/activate
-streamlit run 3-app/app_v3.py
+streamlit run 3-app/app_v3_weighted.py
 ```
 
 The app opens at `http://localhost:8501` by default.
 
 ## App versions
 
-| File | Models shown | Notes |
+| File | What it does | Loads |
 |------|-------------|-------|
-| `app.py` | v1 only | Original single-model app |
-| `app_v2.py` | v1 vs v2 | Side-by-side 2-column comparison |
-| `app_v3.py` | v1 vs v2 vs v3 | Side-by-side 3-column comparison (current) |
+| `app.py` | v1 only, single model | `data/model/` joblib |
+| `app_v2.py` | v1 vs v2 side-by-side | `data/model/`, `data/model_v2/` joblibs |
+| `app_v3.py` | v1 vs v2 vs v3 side-by-side | all three joblibs |
+| `app_v3_weighted.py` | **v3 features with runtime weight sliders (current)** | raw feature matrices — no trained model |
+
+The comparison apps (`app_v2.py`, `app_v3.py`) load trained `.joblib` models, which are **not
+committed** (gitignored) — retrain via the v2/v3 notebooks to use them. The current weighted app
+needs only the committed feature matrices.
+
+## Weighted app — `app_v3_weighted.py`
+
+Instead of a pre-fitted KNN model, this app loads the five raw v3 feature blocks (genre,
+record_label, ratings, country, track_stats) and precomputes each block's per-album
+sum-of-squares once at startup. Sidebar sliders set a weight per block; per query it computes
+weighted cosine directly:
+
+```
+numerator   = Σ_b w_b² · (X_b · q_b)
+album norms = sqrt(Σ_b w_b² · ssq_b)
+cosine      = numerator / (album_norms · query_norm)
+```
+
+No full-matrix rebuild or renormalisation per query (~60–180 ms over the 1.76M-album index).
+Sliders default to the v3 training weights (country 0.2, others 1.0); a reset button restores
+them via an `on_click` callback. The album dropdown is filtered to albums that have signal under
+the *current* weights, so it never offers an album that would return no recommendations.
 
 ## User flow
 

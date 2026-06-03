@@ -6,13 +6,17 @@ Three KNN model versions, each adding more features. All share the same training
 
 ## Model versions
 
+Numbers are after the album-scope rebuild (universe = 1,758,488).
+
 | Version | New features vs previous | Features (post-prune) | Albums indexed | Notebook |
 |---------|--------------------------|-----------------------|----------------|----------|
-| v1 | baseline (tags · labels · types · ratings) | 6,612 | 1,352,482 | 04-knn-training.ipynb |
-| v2 | + artist country, track stats | 8,887 | 2,240,303 | 11-knn-v2-training.ipynb |
-| v3 | genre tags (album+artist+label) + consolidated record_label | 17,090 | 2,240,363 | 12-knn-v3-training.ipynb |
+| v1 | baseline (tags · labels · types · ratings) | 5,653 | 1,070,021 | 04-knn-training.ipynb |
+| v2 | + artist country, track stats | 7,679 | 1,758,005 | 11-knn-v2-training.ipynb |
+| v3 | genre tags (album+artist+label) + consolidated record_label | 15,247 | 1,758,047 | 12-knn-v3-training.ipynb |
 
-v1/v2 use the separate `album_labels_matrix` + `album_types_matrix`; v3 uses the combined `album_record_label_matrix`. v2/v3 index far more albums than v1 because their dense country/track-stats blocks give nearly every album some signal, whereas v1's tag-only feature set leaves ~0.9M albums empty.
+v1/v2 use the separate `album_labels_matrix` + `album_types_matrix`; v3 uses the combined `album_record_label_matrix`. v2/v3 index far more albums than v1 because their dense country/track-stats blocks give nearly every album some signal, whereas v1's tag-only feature set leaves ~0.7M albums empty.
+
+> **Note:** the trained model artefacts (`data/model/`, `data/model_v2/`, `data/model_v3/`) are gitignored — large and regenerable. The current app (`app_v3_weighted.py`) reads the raw feature matrices directly and needs no trained model; see [05-app.md](05-app.md).
 
 ## Output files
 
@@ -43,7 +47,7 @@ flowchart TD
 
 ### Matrix expansion
 
-Feature matrices are saved at the full album universe (2,241,402 albums) from `mb_album.parquet`, so the expansion step in each training notebook is now mostly a no-op — but it is retained so the pipeline still works if a feature block is ever built over a subset. Any albums missing from a block get zero rows:
+Feature matrices are saved at the full album universe (1,758,488 albums) from `mb_album.parquet`, so the expansion step in each training notebook is now mostly a no-op — but it is retained so the pipeline still works if a feature block is ever built over a subset. Any albums missing from a block get zero rows:
 
 ```python
 full_album_ids = pd.Index(pd.read_parquet('data/mb_album.parquet', columns=['id'])['id'].sort_values())
