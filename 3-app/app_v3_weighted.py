@@ -27,7 +27,7 @@ DEFAULT_WEIGHTS = {
     'track_stats':  1.0,
 }
 BLOCK_LABELS = {
-    'genre':        'Genre tags',
+    'genre':        'Genre',
     'record_label': 'Record label',
     'ratings':      'Ratings',
     'country':      'Country',
@@ -157,7 +157,7 @@ lookup = load_lookup()
 st.sidebar.header("Feature weights")
 st.sidebar.caption(
     "Drag a feature up to make it matter more in the recommendations. "
-    "Defaults match the trained v3 model."
+    "Defaults match the recommended settings."
 )
 def reset_weights():
     # Runs as a callback before the sliders are rebuilt, so writing to their
@@ -165,7 +165,7 @@ def reset_weights():
     for name in BLOCK_FILES:
         st.session_state[f"w_{name}"] = DEFAULT_WEIGHTS[name]
 
-st.sidebar.button("Reset to v3 defaults", on_click=reset_weights)
+st.sidebar.button("Reset Defaults", on_click=reset_weights)
 
 weights = {}
 for name in BLOCK_FILES:
@@ -229,7 +229,7 @@ if artist_query:
                     if recs is None or recs.empty:
                         st.info("No recommendations available for this album.")
                     else:
-                        st.subheader("You might also like")
+                        st.subheader("Checkout these albums")
                         active = " · ".join(
                             f"{BLOCK_LABELS[k]} {weights[k]:g}"
                             for k in BLOCK_FILES if weights[k] > 0
