@@ -127,6 +127,10 @@ def recommend(album_id, n, weights, blocks, album_ids, album_id_to_row, ssq, loo
             continue
         aid = int(album_ids[idx])
         row_data = lookup.loc[aid] if aid in lookup.index else {'album_name': None, 'artist_name': None}
+        # Skip Various-Artists releases (samplers/compilations) — they have no single
+        # artist, so they aren't actionable recommendations in an artist→album tool.
+        if pd.isna(row_data['artist_name']):
+            continue
         if input_artist and row_data['artist_name'] == input_artist:
             continue
         results.append({
