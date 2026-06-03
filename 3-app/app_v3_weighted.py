@@ -19,12 +19,15 @@ BLOCK_FILES = {
     'country':      'album_country_matrix.npz',
     'track_stats':  'album_track_stats_matrix.npz',
 }
-DEFAULT_WEIGHTS = {
-    'genre':        1.0,
-    'record_label': 1.0,
-    'ratings':      1.0,
-    'country':      0.2,
-    'track_stats':  1.0,
+# Sliders show words, not numbers. Each level maps to an underlying block weight.
+LEVEL_OPTIONS = ['Off', 'Low', 'Medium', 'High']
+WEIGHT_LEVELS = {'Off': 0.0, 'Low': 0.3, 'Medium': 1.0, 'High': 2.0}
+DEFAULT_LEVELS = {
+    'genre':        'Medium',
+    'record_label': 'Medium',
+    'ratings':      'Medium',
+    'country':      'Low',     # downweighted by default (matches v3 training)
+    'track_stats':  'Medium',
 }
 BLOCK_LABELS = {
     'genre':        'Genre',
@@ -163,17 +166,19 @@ def reset_weights():
     # Runs as a callback before the sliders are rebuilt, so writing to their
     # session-state keys here actually resets the widgets on the next run.
     for name in BLOCK_FILES:
-        st.session_state[f"w_{name}"] = DEFAULT_WEIGHTS[name]
+        st.session_state[f"w_{name}"] = DEFAULT_LEVELS[name]
 
 st.sidebar.button("Reset Defaults", on_click=reset_weights)
 
+levels = {}
 weights = {}
 for name in BLOCK_FILES:
-    weights[name] = st.sidebar.slider(
+    levels[name] = st.sidebar.select_slider(
         BLOCK_LABELS[name],
-        min_value=0.0, max_value=3.0, value=DEFAULT_WEIGHTS[name], step=0.1,
+        options=LEVEL_OPTIONS, value=DEFAULT_LEVELS[name],
         key=f"w_{name}",
     )
+    weights[name] = WEIGHT_LEVELS[levels[name]]
 
 # An album can only be queried if it has signal in a block whose weight is > 0.
 # Combined query-norm² under the current weights = sum_b w_b² * ssq_b. Albums
@@ -231,7 +236,7 @@ if artist_query:
                     else:
                         st.subheader("Checkout these albums")
                         active = " · ".join(
-                            f"{BLOCK_LABELS[k]} {weights[k]:g}"
+                            f"{BLOCK_LABELS[k]}: {levels[k]}"
                             for k in BLOCK_FILES if weights[k] > 0
                         )
                         st.caption(f"Weights — {active}")
