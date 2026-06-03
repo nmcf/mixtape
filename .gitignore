@@ -3,12 +3,24 @@ env/
 venv/
 __pycache__/
 *.py[cod]
+.python-version
 
 # Data & Notebooks
 .ipynb_checkpoints
 *.pkl
+# Feature index pkls are needed to use the committed matrices — keep them
+!data/features/album_ids.pkl
+!data/features/artist_ids.pkl
+# Trained model artefacts are large and regenerable — not versioned
+data/model/
+data/model_v2/
+data/model_v3/
 
 # Secrets
 .env
+.venv
 
 .DS_Store
+
+# Ignore local AI environment artifacts
+.claude/
