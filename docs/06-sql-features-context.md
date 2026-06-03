@@ -1,5 +1,11 @@
 # AI Context — sql_features branch
 
+> **Historical record** of the original `sql_features` branch. File paths here predate the
+> project restructure — `sql_features/*.ipynb` notebooks are now under `2-Prototyping/` (06–12),
+> `app_sql_v2.py` is now `3-app/app_v2.py`, and dimensions predate the album-scope rebuild. For
+> current state see [.ai_context.md](../.ai_context.md), [03-features.md](03-features.md),
+> [04-model.md](04-model.md), [05-app.md](05-app.md), and [08-howto-model-v2.md](08-howto-model-v2.md).
+
 ## What this branch is doing
 
 Adding two new feature blocks (artist country + album track statistics) to the existing KNN recommendation model. The goal is to see whether geography and structural audio metadata improve recommendation quality beyond the baseline tag/label/rating features.

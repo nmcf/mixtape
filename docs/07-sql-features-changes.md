@@ -1,5 +1,10 @@
 # sql_features branch — Changes Overview
 
+> **Historical record** of the original `sql_features` branch. File paths and figures predate the
+> project restructure and the album-scope rebuild — `sql_features/*.ipynb` are now under
+> `2-Prototyping/` (06–12), `app_sql_v2.py` is now `3-app/app_v2.py`. The bug notes below were
+> addressed in later work. For current state see the top-level docs.
+
 ## What was added
 
 This branch adds two new feature blocks to the KNN recommendation model and a side-by-side comparison app to evaluate the effect.

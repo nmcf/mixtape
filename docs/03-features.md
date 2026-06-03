@@ -69,7 +69,7 @@ Result: 10,255 tag columns vs 2,684 in the original album-only matrix (5.9M non-
 
 ## Artist country matrix (`album_country_matrix.npz`)
 
-Built by `08-feature-country.ipynb` from `sql_feature_artist_country_fast.parquet`. One-hot encoded per album using `country_id_imputed` from the artist country pipeline. 2,263 country columns.
+Built by `08-feature-country.ipynb` from `sql_feature_artist_country_fast.parquet`. One-hot encoded per album using `country_id_imputed` from the artist country pipeline. 2,014 country columns.
 
 The artist country parquet is produced by `06-impute-artist-country.ipynb`, which resolves each artist's country via 10 signals in priority order (direct area, begin area, release countries, AR links, label areas, etc.). 62% of artists have no direct area — ~30% of those are recovered via imputation.
 

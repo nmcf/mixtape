@@ -44,6 +44,11 @@ Sliders default to the v3 training weights (country 0.2, others 1.0); a reset bu
 them via an `on_click` callback. The album dropdown is filtered to albums that have signal under
 the *current* weights, so it never offers an album that would return no recommendations.
 
+**Various-Artists releases are excluded from recommendations.** ~1.5% of the index (VA samplers
+and compilations that slipped past the import filter via the studio branch) have a null
+`artist_name`; `recommend()` skips them, since a release with no single artist isn't actionable
+here. Seeds are unaffected — the album dropdown is always built from a selected real artist.
+
 ## User flow
 
 ```mermaid
