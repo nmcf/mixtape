@@ -1,17 +1,25 @@
 # Streamlit App
 
-**File:** `3-app/app.py`
+**Files:** `3-app/app.py` (v1), `3-app/app_v2.py` (v1 vs v2), `3-app/app_v3.py` (v1 vs v2 vs v3)
 
-A single-page Streamlit app that lets users search for an artist, select an album they like, and receive 10 similar album recommendations from the KNN model.
+Three app versions exist. `app_v3.py` is the current active app.
 
 ## Running the app
 
 ```bash
 source env/bin/activate
-streamlit run 3-app/app.py
+streamlit run 3-app/app_v3.py
 ```
 
 The app opens at `http://localhost:8501` by default.
+
+## App versions
+
+| File | Models shown | Notes |
+|------|-------------|-------|
+| `app.py` | v1 only | Original single-model app |
+| `app_v2.py` | v1 vs v2 | Side-by-side 2-column comparison |
+| `app_v3.py` | v1 vs v2 vs v3 | Side-by-side 3-column comparison (current) |
 
 ## User flow
 
@@ -22,30 +30,49 @@ flowchart TD
     B -- Yes --> D[Dropdown: select artist from matches]
     D --> E{Recommendable albums exist?}
     E -- No --> F[Show info message]
-    E -- Yes --> G[Dropdown: select album from artist's albums]
-    G --> H[KNN query: 10 nearest neighbours]
-    H --> I[Display results table]
+    E -- Yes --> G[Dropdown: select album]
+    G --> H[KNN query across all loaded models]
+    H --> I[Display results in side-by-side columns]
 ```
 
 ## Data loaded at startup
 
-Both resources are cached with `@st.cache_resource` so they load once per server process:
+All resources are cached with `@st.cache_resource` and load once per server process:
 
 | Resource | Source | Purpose |
 |----------|--------|---------|
-| KNN model + matrix | `data/model/` | Runs recommendations |
+| v1 model + matrix | `data/model/` | Runs v1 recommendations |
+| v2 model + matrix | `data/model_v2/` | Runs v2 recommendations |
+| v3 model + matrix | `data/model_v3/` | Runs v3 recommendations |
 | Lookup table | `data/mb_album_artists.parquet` | Maps album IDs to names and artist names |
 
-The album dropdown is filtered to only albums present in `album_id_to_row` — albums with no feature data are hidden so the user can never select an unresolvable seed.
+The album dropdown is filtered to albums present in any model's index — albums with no features in any model are hidden.
+
+## Highlight logic (`app_v3.py`)
+
+Rows are highlighted amber when an album appears in **only that model's** results and not in either of the other two. Plain rows appear in at least one other model.
+
+```python
+def highlight_unique(df, other_ids):
+    return [
+        'background-color: #fff3cd; ...' if aid not in other_ids else ''
+        for aid in df['album_id']
+    ]
+```
+
+The summary line below the tables shows how many albums appear in all three, and the unique count per model.
 
 ## Key functions
 
 ### `search_artist(name, lookup)`
 Case-insensitive partial string match on `artist_name`. Returns all matching rows from the lookup table.
 
-### `recommend(album_id, n, ...)`
-Runs a KNN query for the given album, fetches `n * 5` candidates, then filters:
+### `recommend(album_id, n, model, X_knn_norm, album_ids_annotated, album_id_to_row, lookup)`
+Runs a KNN query for the given album across one model, fetches `n * 5` candidates, then:
 - Removes the seed album itself
 - Removes other albums by the same primary artist
 
-Returns a DataFrame with `Album` and `Artist` columns, truncated to `n` rows.
+Returns a DataFrame with `Album`, `Artist`, and `album_id` columns, truncated to `n` rows. Returns `None` if the album has no features in this model.
+
+### `render_model_col(label, recs, other_ids)`
+Renders one column: applies the highlight style and calls `st.dataframe`. Shared across all three columns to keep rendering DRY.

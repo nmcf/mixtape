@@ -1,21 +1,23 @@
 # mixtape
 
-Album recommendation engine built on the MusicBrainz database. Enter an artist you love, pick one of their albums, and get 10 similar albums recommended by a KNN model trained on community tags, ratings, and label data.
+Album recommendation engine built on the MusicBrainz database. Enter an artist you love, pick one of their albums, and get 10 similar albums recommended by a KNN model trained on community tags, ratings, label data, artist country, and track statistics.
+
+Three model versions are available for side-by-side comparison in the app.
 
 ## How it works
 
-1. **Data import** — a DuckDB notebook extracts artist/album data from a local MusicBrainz PostgreSQL instance and saves it as Parquet files.
+1. **Data import** — DuckDB notebooks extract artist/album data from a local MusicBrainz PostgreSQL instance and save it as Parquet files.
 2. **EDA** — notebooks explore the raw data at the album, artist, and joined dataset level.
-3. **Features** — sparse feature matrices are built from tags, labels, types, and Bayesian-weighted ratings.
-4. **Model** — a cosine-distance KNN model is trained on the L2-normalised feature matrix.
-5. **App** — a Streamlit app serves recommendations in the browser.
+3. **Features** — sparse feature matrices are built from genre tags, labels, ratings, artist country, and album track statistics.
+4. **Model** — cosine-distance KNN models are trained on the L2-normalised feature matrix. Three versions exist, each adding more features.
+5. **App** — a Streamlit app serves recommendations in the browser, with a comparison view across all three models.
 
-See the [`docs/`](docs/) folder for detailed documentation on each step. Each notebook also contains inline developer notes explaining the logic of every cell.
+See the [`docs/`](docs/) folder for detailed documentation on each step.
 
 ## Prerequisites
 
 - Python 3.11+
-- A local MusicBrainz PostgreSQL database running at `localhost:5432` (only needed to re-import data; the Parquet files and trained model are included)
+- A local MusicBrainz PostgreSQL database (only needed to re-import data; Parquet files and trained models are included)
 
 ## Quick start
 
@@ -43,16 +45,16 @@ pip install -r requirements.txt
 ### 4. Run the app
 
 ```bash
-streamlit run 3-app/app.py
+streamlit run 3-app/app_v3.py
 ```
 
 The app opens at **http://localhost:8501**.
 
-No database connection is needed to run the app — the pre-built model and Parquet files in `data/` are all that's required.
+No database connection is needed — the pre-built models and Parquet files in `data/` are all that's required.
 
 ## Re-building from scratch
 
-If you want to re-import data or retrain the model, you'll need a MusicBrainz PostgreSQL database. Copy `.env.example` to `.env` and fill in your credentials, then run the notebooks in order:
+If you want to re-import data or retrain the models, you'll need a MusicBrainz PostgreSQL database. Copy `.env.example` to `.env` and fill in your credentials, then run the notebooks in order:
 
 ```
 1-EDA/01-postgres-to-parquet.ipynb              → imports Parquet files from Postgres
@@ -61,7 +63,15 @@ If you want to re-import data or retrain the model, you'll need a MusicBrainz Po
 2-Prototyping/01-feature-tags-labels.ipynb      → builds tag, label, and type sparse matrices
 2-Prototyping/02-feature-ratings.ipynb          → builds Bayesian-weighted rating matrices
 2-Prototyping/03-feature-assembly.ipynb         → inspects and validates the combined matrix
-2-Prototyping/04-knn-training.ipynb             → trains and saves the KNN model
+2-Prototyping/04-knn-training.ipynb             → trains v1 model → data/model/
+
+2-Prototyping/06-impute-artist-country.ipynb    → builds artist country parquet (needs Postgres)
+2-Prototyping/07-build-album-track-stats.ipynb  → builds album track stats parquet (needs Postgres)
+2-Prototyping/08-feature-country.ipynb          → builds country feature matrix
+2-Prototyping/09-feature-track-stats.ipynb      → builds track stats feature matrix
+2-Prototyping/10-feature-genre-tags.ipynb       → builds combined genre tag matrix
+2-Prototyping/11-knn-v2-training.ipynb          → trains v2 model → data/model_v2/
+2-Prototyping/12-knn-v3-training.ipynb          → trains v3 model → data/model_v3/
 ```
 
 ## Project layout
@@ -80,14 +90,26 @@ mixtape/
 │   ├── 01-feature-tags-labels.ipynb    Build: tag, label, and type sparse matrices
 │   ├── 02-feature-ratings.ipynb        Build: Bayesian-weighted rating matrices
 │   ├── 03-feature-assembly.ipynb       Inspect: combined feature matrix
-│   ├── 04-knn-training.ipynb           Train: KNN model → data/model/
-│   └── 05-knn-query.ipynb              Prototype: interactive recommendation queries
+│   ├── 04-knn-training.ipynb           Train: v1 KNN model → data/model/
+│   ├── 05-knn-query.ipynb              Prototype: interactive recommendation queries
+│   ├── 06-impute-artist-country.ipynb  Build: artist country parquet (needs Postgres)
+│   ├── 07-build-album-track-stats.ipynb Build: album track stats parquet (needs Postgres)
+│   ├── 08-feature-country.ipynb        Build: country feature matrix
+│   ├── 09-feature-track-stats.ipynb    Build: track stats feature matrix
+│   ├── 10-feature-genre-tags.ipynb     Build: combined genre tag matrix
+│   ├── 11-knn-v2-training.ipynb        Train: v2 KNN model → data/model_v2/
+│   ├── 12-knn-v3-training.ipynb        Train: v3 KNN model → data/model_v3/
+│   └── queries/                        SQL queries for DuckDB feature extraction
 ├── 3-app/
-│   └── app.py                          Streamlit app
+│   ├── app.py                          Streamlit app (v1 only)
+│   ├── app_v2.py                       Streamlit app (v1 vs v2 comparison)
+│   └── app_v3.py                       Streamlit app (v1 vs v2 vs v3 comparison)
 ├── data/
-│   ├── mb_*.parquet                    Raw MusicBrainz exports (10 tables)
+│   ├── mb_*.parquet                    Raw MusicBrainz exports
 │   ├── features/                       Sparse feature matrices (.npz, .pkl)
-│   ├── model/                          Trained model artefacts
+│   ├── model/                          v1 model artefacts
+│   ├── model_v2/                       v2 model artefacts
+│   ├── model_v3/                       v3 model artefacts
 │   └── pickles/                        Intermediate DataFrames
 ├── docs/                               Step-by-step pipeline documentation
 └── requirements.txt
@@ -103,3 +125,4 @@ mixtape/
 | [04-model.md](docs/04-model.md) | KNN training pipeline |
 | [05-app.md](docs/05-app.md) | Streamlit app walkthrough |
 | [06-schema-diagrams.md](1-EDA/06-schema-diagrams.md) | Schema and data flow diagrams |
+| [08-howto-model-v2.md](docs/08-howto-model-v2.md) | How to run the v2/v3 model pipeline |
