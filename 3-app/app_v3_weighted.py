@@ -195,7 +195,7 @@ def is_queryable(album_id):
     return row is not None and combined_ssq[row] > 0
 
 # --- Main: artist → album → recommendations ---
-artist_query = st.text_input("Tell us your favourite artist")
+artist_query = st.text_input("Set the Tone — Name an Artist")
 
 if artist_query:
     matches = search_artist(artist_query, lookup)
