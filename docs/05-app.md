@@ -40,9 +40,11 @@ cosine      = numerator / (album_norms · query_norm)
 ```
 
 No full-matrix rebuild or renormalisation per query (~60–180 ms over the 1.76M-album index).
-Sliders default to the v3 training weights (country 0.2, others 1.0); a reset button restores
-them via an `on_click` callback. The album dropdown is filtered to albums that have signal under
-the *current* weights, so it never offers an album that would return no recommendations.
+Each slider is a worded `select_slider` — **Off · Low · Medium · High**, mapped to block weights
+`0.0 / 0.3 / 1.0 / 2.0`. Defaults are Country = Low and the rest = Medium (mirroring the v3
+training weights where country is downweighted); a "Reset Defaults" button restores them via an
+`on_click` callback. The album dropdown is filtered to albums that have signal under the
+*current* weights, so it never offers an album that would return no recommendations.
 
 **Various-Artists releases are excluded from recommendations.** ~1.5% of the index (VA samplers
 and compilations that slipped past the import filter via the studio branch) have a null
