@@ -204,7 +204,7 @@ if artist_query:
         st.warning("No artists found. Try a different name.")
     else:
         artists = matches['artist_name'].dropna().unique()
-        selected_artist = st.selectbox("Select artist", sorted(artists))
+        selected_artist = st.selectbox("Pick the Artist", sorted(artists))
 
         artist_albums = matches[matches['artist_name'] == selected_artist]
         album_options = {
@@ -220,7 +220,7 @@ if artist_query:
                 "cover far fewer albums."
             )
         else:
-            selected_album_name = st.selectbox("Select album", sorted(album_options.keys()))
+            selected_album_name = st.selectbox("Pick a Starting Album", sorted(album_options.keys()))
 
             if selected_album_name:
                 album_id = album_options[selected_album_name]
