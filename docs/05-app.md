@@ -1,6 +1,6 @@
 # Streamlit App
 
-**Files:** `3-app/app.py` (v1), `3-app/app_v2.py` (v1 vs v2), `3-app/app_v3.py` (v1 vs v2 vs v3), `3-app/app_v3_weighted.py` (v3 with weight sliders)
+**Files:** `3-app/app.py` (v1), `3-app/app_v2.py` (v1 vs v2), `3-app/app_v3.py` (v1 vs v2 vs v3), `3-app/app_v3_weighted.py` (v3 with weight knobs + filters)
 
 `app_v3_weighted.py` is the current active app.
 
@@ -20,7 +20,7 @@ The app opens at `http://localhost:8501` by default.
 | `app.py` | v1 only, single model | `data/model/` joblib |
 | `app_v2.py` | v1 vs v2 side-by-side | `data/model/`, `data/model_v2/` joblibs |
 | `app_v3.py` | v1 vs v2 vs v3 side-by-side | all three joblibs |
-| `app_v3_weighted.py` | **v3 features with runtime weight sliders (current)** | raw feature matrices — no trained model |
+| `app_v3_weighted.py` | **v3 features with runtime weight knobs + album filters (current)** | raw feature matrices + flag parquets — no trained model |
 
 The comparison apps (`app_v2.py`, `app_v3.py`) load trained `.joblib` models, which are **not
 committed** (gitignored) — retrain via the v2/v3 notebooks to use them. The current weighted app
@@ -30,7 +30,7 @@ needs only the committed feature matrices.
 
 Instead of a pre-fitted KNN model, this app loads the five raw v3 feature blocks (genre,
 record_label, ratings, country, track_stats) and precomputes each block's per-album
-sum-of-squares once at startup. Sidebar sliders set a weight per block; per query it computes
+sum-of-squares once at startup. Sidebar **knobs** set a weight per block; per query it computes
 weighted cosine directly:
 
 ```
@@ -40,11 +40,44 @@ cosine      = numerator / (album_norms · query_norm)
 ```
 
 No full-matrix rebuild or renormalisation per query (~60–180 ms over the 1.76M-album index).
-Each slider is a worded `select_slider` — **Off · Low · Medium · High**, mapped to block weights
-`0.0 / 0.3 / 1.0 / 2.0`. Defaults are Country = Low and the rest = Medium (mirroring the v3
-training weights where country is downweighted); a "Reset Defaults" button restores them via an
-`on_click` callback. The album dropdown is filtered to albums that have signal under the
-*current* weights, so it never offers an album that would return no recommendations.
+The album dropdown is filtered to albums that have signal under the *current* weights, so it
+never offers an album that would return no recommendations.
+
+### Feature knobs
+
+The sidebar header reads **"Tune your sound"**. Each feature block is a guitar-amp-style rotary
+knob (custom component, `3-app/knob_component/index.html`) reading **0–11**, mapped to a block
+weight by `dial_to_weight(d) = d/11·2.0` (0 → off, 11 → 2.0 max). Click a tick around the ring to
+set a value. Defaults (dial units) are Country = 2 and the rest = 6 (mirroring the v3 training
+weights where country is downweighted); a "Reset Defaults" button restores them via an `on_click`
+callback. The active weights are echoed under the results as an **"EQ — …"** caption.
+
+Results render as a three-column table — **Album · Artist · Match** — where Match is the weighted
+cosine shown as a right-aligned percentage to one decimal (`st.column_config.NumberColumn`,
+`format='%.1f%%'`, pinned narrow via an integer pixel `width`).
+
+Implementation notes: the knob HTML is served from a small background `HTTPServer` thread on port
+8502 and registered with `declare_component(url=...)` (Streamlit's built-in component file server
+failed in this environment). Outbound messages to Streamlit must include `isStreamlitMessage:
+true`; after a click the component briefly ignores inbound render events (600 ms) so a stale
+render can't revert the value just set.
+
+### Album filters
+
+Two `select_slider`s below the knobs filter results by MusicBrainz release-group **secondary
+type** (an exact schema lookup, not an album-name guess):
+
+| Slider | Options | Keeps |
+|--------|---------|-------|
+| **Live Albums** | Live · Both · Studio | Live = secondary type Live (6); Studio = everything else |
+| **Greatest Hits** | Collections · Both · Albums | Collections = secondary type Compilation (1); Albums = everything else |
+
+Both default to **Both** and chain on both the artist-album dropdown and the recommendation
+results, via the generic `filter_by_flag()` helper. The flags are pre-exported to
+`data/mb_album_live_flag.parquet` and `data/mb_album_compilation_flag.parquet` (single `album_id`
+column each) by the matching `2-Prototyping/queries/*_flag_duckdb.sql`, then loaded into sets by
+`load_flag_ids()`. This replaced an earlier album-name keyword heuristic that mis-classified
+titles with no "live" keyword (e.g. "Set List", date-format concert titles).
 
 **Various-Artists releases are excluded from recommendations.** ~1.5% of the index (VA samplers
 and compilations that slipped past the import filter via the studio branch) have a null

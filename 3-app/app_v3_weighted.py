@@ -7,6 +7,10 @@ import pandas as pd
 import numpy as np
 from scipy.sparse import load_npz
 import pickle
+import streamlit.components.v1 as components
+import threading
+from http.server import HTTPServer, SimpleHTTPRequestHandler
+import functools
 
 DATA_DIR     = os.path.join(os.path.dirname(__file__), '..', 'data')
 FEATURES_DIR = os.path.join(DATA_DIR, 'features')
@@ -14,28 +18,50 @@ FEATURES_DIR = os.path.join(DATA_DIR, 'features')
 # The five v3 feature blocks. Defaults match 12-knn-v3-training.ipynb.
 BLOCK_FILES = {
     'genre':        'album_genre_matrix.npz',
-    'record_label': 'album_record_label_matrix.npz',
     'ratings':      'album_ratings_matrix.npz',
-    'country':      'album_country_matrix.npz',
+    'record_label': 'album_record_label_matrix.npz',
     'track_stats':  'album_track_stats_matrix.npz',
-}
-# Sliders show words, not numbers. Each level maps to an underlying block weight.
-LEVEL_OPTIONS = ['Off', 'Low', 'Medium', 'High']
-WEIGHT_LEVELS = {'Off': 0.0, 'Low': 0.3, 'Medium': 1.0, 'High': 2.0}
-DEFAULT_LEVELS = {
-    'genre':        'Medium',
-    'record_label': 'Medium',
-    'ratings':      'Medium',
-    'country':      'Low',     # downweighted by default (matches v3 training)
-    'track_stats':  'Medium',
+    'country':      'album_country_matrix.npz',
 }
 BLOCK_LABELS = {
     'genre':        'Genre',
-    'record_label': 'Record label',
     'ratings':      'Ratings',
+    'record_label': 'Record<br>Label',
+    'track_stats':  'Track<br>Stats',
     'country':      'Country',
-    'track_stats':  'Track stats',
 }
+# Dial range is 0-11. Weight = dial / 11 * 2.0  (0 → 0.0 off, 11 → 2.0 max).
+# Defaults mirror the original training weights:
+#   Medium (1.0)  ≈ dial 6,  Low (0.3) ≈ dial 2
+DEFAULT_DIALS = {
+    'genre':        6,
+    'record_label': 6,
+    'ratings':      6,
+    'country':      2,   # downweighted (matches v3 training)
+    'track_stats':  6,
+}
+
+def dial_to_weight(d):
+    return round(d / 11 * 2.0, 4)
+
+_COMPONENT_DIR = os.path.join(os.path.dirname(__file__), "knob_component")
+_COMPONENT_PORT = 8502
+
+def _start_component_server():
+    handler = functools.partial(SimpleHTTPRequestHandler, directory=_COMPONENT_DIR)
+    try:
+        server = HTTPServer(("localhost", _COMPONENT_PORT), handler)
+        server.serve_forever()
+    except OSError:
+        pass  # port already in use — server already running
+
+_server_thread = threading.Thread(target=_start_component_server, daemon=True)
+_server_thread.start()
+
+_knob_component = components.declare_component(
+    "knob_panel",
+    url=f"http://localhost:{_COMPONENT_PORT}",
+)
 
 # ---------------------------------------------------------------------------
 # Cached resource loading
@@ -69,9 +95,29 @@ def load_lookup():
         .set_index('album_id')
     )
 
+@st.cache_resource
+def load_flag_ids(filename):
+    """Set of album_ids flagged with a given MusicBrainz secondary type.
+    Exported by the matching queries/*_flag_duckdb.sql — an exact schema
+    lookup, far more reliable than guessing from the album name."""
+    df = pd.read_parquet(os.path.join(DATA_DIR, filename), columns=['album_id'])
+    return set(df['album_id'].astype(int))
+
 # ---------------------------------------------------------------------------
 # Query helpers
 # ---------------------------------------------------------------------------
+
+def filter_by_flag(df, mode, flag_ids, include_label):
+    """Keep flagged-only or unflagged-only rows. mode == 'Both' keeps everything;
+    mode == include_label keeps flagged rows; any other value keeps the rest.
+
+    album_id is taken from an 'album_id' column if present, otherwise from the
+    index (the lookup table is indexed by album_id)."""
+    if mode == 'Both':
+        return df
+    aid = df['album_id'] if 'album_id' in df.columns else df.index
+    mask = aid.astype(int).isin(flag_ids)
+    return df[mask] if mode == include_label else df[~mask]
 
 def search_artist(name, lookup):
     mask = lookup['artist_name'].str.contains(name, case=False, na=False)
@@ -139,7 +185,7 @@ def recommend(album_id, n, weights, blocks, album_ids, album_id_to_row, ssq, loo
         results.append({
             'Album':      row_data['album_name'],
             'Artist':     row_data['artist_name'],
-            'Similarity': round(float(cosine[idx]), 4),
+            'Match':      round(float(cosine[idx]) * 100, 1),
             'album_id':   aid,
         })
         if len(results) == n:
@@ -155,30 +201,56 @@ st.title("Mixtape — Dial in Your Sound")
 
 blocks, album_ids, album_id_to_row, ssq = load_blocks()
 lookup = load_lookup()
+live_ids = load_flag_ids('mb_album_live_flag.parquet')
+compilation_ids = load_flag_ids('mb_album_compilation_flag.parquet')
 
-# --- Sidebar: feature weight sliders ---
-st.sidebar.header("Feature weights")
-st.sidebar.caption(
-    "Drag a feature up to make it matter more in the recommendations. "
-    "Defaults match the recommended settings."
-)
+# --- Sidebar: feature weight knobs ---
+st.sidebar.header("Tune your sound")
+st.sidebar.caption("Set the balance to find your sound")
+
 def reset_weights():
-    # Runs as a callback before the sliders are rebuilt, so writing to their
-    # session-state keys here actually resets the widgets on the next run.
     for name in BLOCK_FILES:
-        st.session_state[f"w_{name}"] = DEFAULT_LEVELS[name]
+        st.session_state[f"dial_{name}"] = DEFAULT_DIALS[name]
+    st.session_state["knob_reset_flag"] = not st.session_state.get("knob_reset_flag", False)
 
 st.sidebar.button("Reset Defaults", on_click=reset_weights)
 
-levels = {}
-weights = {}
+# Read current dial values from session state (initialise on first run)
 for name in BLOCK_FILES:
-    levels[name] = st.sidebar.select_slider(
-        BLOCK_LABELS[name],
-        options=LEVEL_OPTIONS, value=DEFAULT_LEVELS[name],
-        key=f"w_{name}",
-    )
-    weights[name] = WEIGHT_LEVELS[levels[name]]
+    if f"dial_{name}" not in st.session_state:
+        st.session_state[f"dial_{name}"] = DEFAULT_DIALS[name]
+
+current_dials = {name: st.session_state[f"dial_{name}"] for name in BLOCK_FILES}
+
+knob_defs = [
+    {"id": name, "label": BLOCK_LABELS[name],
+     "value": current_dials[name], "defaultValue": DEFAULT_DIALS[name]}
+    for name in BLOCK_FILES
+]
+
+with st.sidebar:
+    result = _knob_component(knobs=knob_defs, key="knob_panel", height=280)
+
+live_mode = st.sidebar.select_slider(
+    "Live Albums",
+    options=["Live", "Both", "Studio"],
+    value="Both",
+)
+
+hits_mode = st.sidebar.select_slider(
+    "Greatest Hits",
+    options=["Collections", "Both", "Albums"],
+    value="Both",
+)
+
+# result is a dict {feature_id: dial_value} returned by the component on any change
+if result:
+    for name in BLOCK_FILES:
+        if name in result:
+            st.session_state[f"dial_{name}"] = int(result[name])
+    current_dials = {name: st.session_state[f"dial_{name}"] for name in BLOCK_FILES}
+
+weights = {name: dial_to_weight(current_dials[name]) for name in BLOCK_FILES}
 
 # An album can only be queried if it has signal in a block whose weight is > 0.
 # Combined query-norm² under the current weights = sum_b w_b² * ssq_b. Albums
@@ -207,6 +279,8 @@ if artist_query:
         selected_artist = st.selectbox("Pick the Artist", sorted(artists))
 
         artist_albums = matches[matches['artist_name'] == selected_artist]
+        artist_albums = filter_by_flag(artist_albums, live_mode, live_ids, 'Live')
+        artist_albums = filter_by_flag(artist_albums, hits_mode, compilation_ids, 'Collections')
         album_options = {
             row['album_name']: album_id
             for album_id, row in artist_albums.iterrows()
@@ -226,21 +300,32 @@ if artist_query:
                 album_id = album_options[selected_album_name]
 
                 if all(w == 0.0 for w in weights.values()):
-                    st.warning("All feature weights are zero — raise at least one slider.")
+                    st.warning("All knobs are at zero — turn at least one up.")
                 else:
                     recs = recommend(album_id, 10, weights, blocks,
                                      album_ids, album_id_to_row, ssq, lookup)
+
+                    if recs is not None and not recs.empty:
+                        recs = filter_by_flag(recs, live_mode, live_ids, 'Live')
+                        recs = filter_by_flag(recs, hits_mode, compilation_ids, 'Collections')
 
                     if recs is None or recs.empty:
                         st.info("No recommendations available for this album.")
                     else:
                         st.subheader("Checkout these albums")
                         active = " · ".join(
-                            f"{BLOCK_LABELS[k]}: {levels[k]}"
+                            f"{BLOCK_LABELS[k].replace('<br>', ' ')}: {current_dials[k]}"
                             for k in BLOCK_FILES if weights[k] > 0
                         )
-                        st.caption(f"Weights — {active}")
+                        st.caption(f"EQ — {active}")
                         st.dataframe(
-                            recs[['Album', 'Artist', 'Similarity']],
+                            recs[['Album', 'Artist', 'Match']],
                             use_container_width=True, hide_index=True,
+                            column_config={
+                                'Album':  st.column_config.TextColumn(width='medium'),
+                                'Artist': st.column_config.TextColumn(width='medium'),
+                                'Match':  st.column_config.NumberColumn(
+                                    width=35, format='%.1f%%'
+                                ),
+                            },
                         )
