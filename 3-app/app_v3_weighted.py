@@ -63,6 +63,25 @@ _knob_component = components.declare_component(
     url=f"http://localhost:{_COMPONENT_PORT}",
 )
 
+# Guitar pickup-style blade switch, served from the same component dir.
+_switch_component = components.declare_component(
+    "blade_switch",
+    url=f"http://localhost:{_COMPONENT_PORT}/switch.html",
+)
+
+def blade_switch(title, options, default, key):
+    """Tele/Strat blade-switch selector. Returns the chosen option string.
+
+    The component is the single source of truth: keyed by `key`, Streamlit
+    persists its last emitted value across reruns. `value` seeds the blade only
+    at the iframe's first render (it ignores inbound renders afterwards), and
+    `default` is returned until the first interaction. No session_state mirror,
+    so each switch is fully independent of the knobs and of the other switch."""
+    ret = _switch_component(
+        title=title, options=options, value=default, default=default, key=key,
+    )
+    return ret if ret in options else default
+
 # ---------------------------------------------------------------------------
 # Cached resource loading
 # ---------------------------------------------------------------------------
@@ -209,47 +228,51 @@ st.sidebar.header("Tune your sound")
 st.sidebar.caption("Set the balance to find your sound")
 
 def reset_weights():
-    for name in BLOCK_FILES:
-        st.session_state[f"dial_{name}"] = DEFAULT_DIALS[name]
+    # Flip the nonce only. The knob component watches reset_nonce and, when it
+    # changes, snaps every dial back to its default AND re-emits — so `result`
+    # (the source of truth) becomes the defaults too. No dial state is mirrored
+    # in session_state, so nothing stale can be written back afterwards.
     st.session_state["knob_reset_flag"] = not st.session_state.get("knob_reset_flag", False)
 
 st.sidebar.button("Reset Defaults", on_click=reset_weights)
 
-# Read current dial values from session state (initialise on first run)
-for name in BLOCK_FILES:
-    if f"dial_{name}" not in st.session_state:
-        st.session_state[f"dial_{name}"] = DEFAULT_DIALS[name]
-
-current_dials = {name: st.session_state[f"dial_{name}"] for name in BLOCK_FILES}
+# Seed each knob's `value` from its last emitted value (Streamlit persists the
+# component's return under its key). This way, if Streamlit remounts the iframe
+# on a rerun, it re-initialises to the user's current settings rather than
+# snapping to defaults. `defaultValue` is carried separately and used by the
+# iframe only on a reset (nonce change).
+_prev = st.session_state.get("knob_panel") or {}
+def _dial(name):
+    try:
+        return int(_prev.get(name, DEFAULT_DIALS[name]))
+    except (TypeError, ValueError):
+        return DEFAULT_DIALS[name]
 
 knob_defs = [
     {"id": name, "label": BLOCK_LABELS[name],
-     "value": current_dials[name], "defaultValue": DEFAULT_DIALS[name]}
+     "value": _dial(name), "defaultValue": DEFAULT_DIALS[name]}
     for name in BLOCK_FILES
 ]
 
 with st.sidebar:
-    result = _knob_component(knobs=knob_defs, key="knob_panel", height=280)
+    result = _knob_component(
+        knobs=knob_defs, key="knob_panel", height=280,
+        reset_nonce=st.session_state.get("knob_reset_flag", False),
+        default={name: DEFAULT_DIALS[name] for name in BLOCK_FILES},
+    )
 
-live_mode = st.sidebar.select_slider(
-    "Live Albums",
-    options=["Live", "Both", "Studio"],
-    value="Both",
-)
+with st.sidebar:
+    _sw_col1, _sw_col2 = st.columns(2)
+    with _sw_col1:
+        live_mode = blade_switch(
+            "Live Albums", ["Live", "Both", "Studio"], "Both", key="live_switch")
+    with _sw_col2:
+        hits_mode = blade_switch(
+            "Greatest Hits", ["Collections", "Both", "Albums"], "Both", key="hits_switch")
 
-hits_mode = st.sidebar.select_slider(
-    "Greatest Hits",
-    options=["Collections", "Both", "Albums"],
-    value="Both",
-)
-
-# result is a dict {feature_id: dial_value} returned by the component on any change
-if result:
-    for name in BLOCK_FILES:
-        if name in result:
-            st.session_state[f"dial_{name}"] = int(result[name])
-    current_dials = {name: st.session_state[f"dial_{name}"] for name in BLOCK_FILES}
-
+# `result` is the dict the knob component last emitted (persisted by key across
+# reruns); falls back to the `default` above before the first render.
+current_dials = {name: int(result.get(name, DEFAULT_DIALS[name])) for name in BLOCK_FILES}
 weights = {name: dial_to_weight(current_dials[name]) for name in BLOCK_FILES}
 
 # An album can only be queried if it has signal in a block whose weight is > 0.

@@ -139,7 +139,6 @@ function sendValues() {
   for (var i = 0; i < idOrder.length; i++) {
     out[idOrder[i]] = state[idOrder[i]].value;
   }
-  ignoreUntil = Date.now() + 600;  // ignore stale renders for 600ms after sending
   window.parent.postMessage({ isStreamlitMessage: true, type: 'streamlit:setComponentValue', value: out }, '*');
 }
 
@@ -188,42 +187,47 @@ document.addEventListener('click', function(e) {
 });
 
 // ── Streamlit render event ─────────────────────────────────────────────────
-var initialised    = false;
-var ignoreUntil    = 0;   // epoch ms — ignore stale renders after user interaction
+// The component owns its state once initialised. Inbound renders are applied
+// only when `reset_nonce` changes (i.e. the "Reset Defaults" button) — ordinary
+// reruns triggered by other widgets never disturb a dial the user just set, so
+// there's no stale-value flash.
+var initialised = false;
+var lastNonce;
 
-function applyDefs(defs) {
-  if (!initialised) {
-    idOrder = [];
-    for (var i = 0; i < defs.length; i++) {
-      var d = defs[i];
-      idOrder.push(d.id);
-      state[d.id] = { value: d.value, defaultValue: d.defaultValue, label: d.label };
-    }
-    renderAll();
-    initialised = true;
-  } else {
-    if (Date.now() < ignoreUntil) return;  // swallow stale render after user click
-    var changed = false;
-    for (var i = 0; i < defs.length; i++) {
-      var d = defs[i];
-      if (state[d.id] && state[d.id].value !== d.value) {
-        state[d.id].value        = d.value;
-        state[d.id].defaultValue = d.defaultValue;
-        changed = true;
-      }
-    }
-    if (changed) renderAll();
+function applyDefs(defs, useDefault) {
+  idOrder = [];
+  for (var i = 0; i < defs.length; i++) {
+    var d = defs[i];
+    idOrder.push(d.id);
+    // init → adopt the seeded current value; reset → snap to the default
+    state[d.id] = {
+      value: useDefault ? d.defaultValue : d.value,
+      defaultValue: d.defaultValue,
+      label: d.label,
+    };
   }
+  renderAll();
 }
 
 window.addEventListener('message', function(e) {
   try {
     var data = e.data;
     if (!data || typeof data !== 'object') return;
-    if (data.type === 'streamlit:render') {
-      var defs = (data.args && data.args.knobs) ? data.args.knobs : [];
-      if (defs.length > 0) applyDefs(defs);
+    if (data.type !== 'streamlit:render') return;
+    var args = data.args || {};
+    var defs = args.knobs || [];
+    if (!defs.length) return;
+
+    if (!initialised) {
+      applyDefs(defs, false);     // (re)mount — adopt the seeded current values
+      lastNonce = args.reset_nonce;
+      initialised = true;
+    } else if (args.reset_nonce !== lastNonce) {
+      applyDefs(defs, true);      // deliberate "Reset Defaults" — snap to defaults
+      lastNonce = args.reset_nonce;
+      sendValues();               // re-emit so Python's `result` reflects the reset
     }
+    // else: ordinary rerun, no remount — ignore; the component is the source of truth
   } catch(err) {
     document.getElementById('panel').innerHTML =
       '<div style="color:#c44;font-size:10px;padding:8px;grid-column:1/-1">JS error: ' + err.message + '</div>';

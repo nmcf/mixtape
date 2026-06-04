@@ -56,19 +56,16 @@ Results render as a three-column table — **Album · Artist · Match** — wher
 cosine shown as a right-aligned percentage to one decimal (`st.column_config.NumberColumn`,
 `format='%.1f%%'`, pinned narrow via an integer pixel `width`).
 
-Implementation notes: the knob HTML is served from a small background `HTTPServer` thread on port
-8502 and registered with `declare_component(url=...)` (Streamlit's built-in component file server
-failed in this environment). Outbound messages to Streamlit must include `isStreamlitMessage:
-true`; after a click the component briefly ignores inbound render events (600 ms) so a stale
-render can't revert the value just set.
-
 ### Album filters
 
-Two `select_slider`s below the knobs filter results by MusicBrainz release-group **secondary
-type** (an exact schema lookup, not an album-name guess):
+Two mixing-console-style **vertical faders** below the knobs (custom component,
+`3-app/knob_component/switch.html`, placed side by side with `st.columns(2)`) filter results by
+MusicBrainz release-group **secondary type** — an exact schema lookup, not an album-name guess.
+Each fader has three detents with the option labels at top / middle / bottom; click a label or
+anywhere along the track to slide the cap.
 
-| Slider | Options | Keeps |
-|--------|---------|-------|
+| Fader | Options | Keeps |
+|-------|---------|-------|
 | **Live Albums** | Live · Both · Studio | Live = secondary type Live (6); Studio = everything else |
 | **Greatest Hits** | Collections · Both · Albums | Collections = secondary type Compilation (1); Albums = everything else |
 
@@ -78,6 +75,23 @@ results, via the generic `filter_by_flag()` helper. The flags are pre-exported t
 column each) by the matching `2-Prototyping/queries/*_flag_duckdb.sql`, then loaded into sets by
 `load_flag_ids()`. This replaced an earlier album-name keyword heuristic that mis-classified
 titles with no "live" keyword (e.g. "Set List", date-format concert titles).
+
+### Custom widget plumbing & state model
+
+Both the knob panel and the fader switches are custom HTML/SVG components served from a small
+background `HTTPServer` thread on port 8502 and registered with `declare_component(url=...)`
+(Streamlit's built-in component file server failed in this environment). All outbound messages to
+Streamlit must include `isStreamlitMessage: true`.
+
+Each widget is the **single source of truth** for its own value — there is no `session_state`
+mirror, so the knobs and the two faders move fully independently. Streamlit persists a keyed
+component's last emitted value; the knob panel is re-seeded from that persisted value each rerun so
+a silent iframe remount restores the user's dials rather than snapping to defaults. After first
+render every iframe **ignores ordinary inbound renders** — only a change to the knob panel's
+`reset_nonce` arg (flipped by the "Reset Defaults" button) makes it re-apply (using each knob's
+`defaultValue`) and re-emit so the Python side stays in sync. The faders have no external reset, so
+they ignore all inbound renders after init. This event-based scheme replaced an earlier 600 ms
+time-window guard that caused cross-widget glitches and a stale-value "memory" bug.
 
 **Various-Artists releases are excluded from recommendations.** ~1.5% of the index (VA samplers
 and compilations that slipped past the import filter via the studio branch) have a null
