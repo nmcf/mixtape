@@ -48,7 +48,7 @@ pip install -r requirements.txt
 streamlit run 3-app/app_v3_weighted.py
 ```
 
-The app opens at **http://localhost:8501**. It serves recommendations from the v3 feature set and lets you reweight features (genre, record label, ratings, country, track stats) with sliders in real time.
+The app opens at **http://localhost:8501**. It serves recommendations from the v3 feature set and lets you reweight features (genre, record label, ratings, country, track stats) in real time using guitar-amp-style **knobs** (0–11) in the sidebar. Two mixing-console-style **vertical faders** — **Live Albums** (Live/Both/Studio) and **Greatest Hits** (Collections/Both/Albums) — narrow results by MusicBrainz release type.
 
 No database connection is needed — the Parquet files and feature matrices in `data/` are all that's required. (The trained `.joblib` models used by the older comparison apps `app_v2.py`/`app_v3.py` are not committed; retrain them with the v2/v3 notebooks if you want those apps.)
 
@@ -105,7 +105,8 @@ mixtape/
 │   ├── app.py                          Streamlit app (v1 only)
 │   ├── app_v2.py                       Streamlit app (v1 vs v2 comparison)
 │   ├── app_v3.py                       Streamlit app (v1 vs v2 vs v3 comparison)
-│   └── app_v3_weighted.py              Streamlit app (v3 features, runtime weight sliders) — current
+│   ├── app_v3_weighted.py              Streamlit app (v3 features, runtime knobs + filters) — current
+│   └── knob_component/                 Custom HTML/SVG sidebar widgets (rotary knobs + fader switches)
 ├── data/
 │   ├── mb_*.parquet                    Raw MusicBrainz exports (committed)
 │   ├── sql_feature_*.parquet           Country + track-stats feature exports
