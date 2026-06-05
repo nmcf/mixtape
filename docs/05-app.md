@@ -28,10 +28,9 @@ needs only the committed feature matrices.
 
 ## Weighted app — `app_v3_weighted.py`
 
-Instead of a pre-fitted KNN model, this app loads the five raw v3 feature blocks (genre,
-record_label, ratings, country, track_stats) and precomputes each block's per-album
-sum-of-squares once at startup. Sidebar **knobs** set a weight per block; per query it computes
-weighted cosine directly:
+Instead of a pre-fitted KNN model, this app loads six raw feature blocks (genre, record_label,
+ratings, country, track_stats, era) and precomputes each block's per-album sum-of-squares once
+at startup. Sidebar **knobs** set a weight per block; per query it computes weighted cosine directly:
 
 ```
 numerator   = Σ_b w_b² · (X_b · q_b)
@@ -48,8 +47,8 @@ never offers an album that would return no recommendations.
 The sidebar header reads **"Tune your sound"**. Each feature block is a guitar-amp-style rotary
 knob (custom component, `3-app/knob_component/index.html`) reading **0–11**, mapped to a block
 weight by `dial_to_weight(d) = d/11·2.0` (0 → off, 11 → 2.0 max). Click a tick around the ring to
-set a value. Defaults (dial units) are Country = 2 and the rest = 6 (mirroring the v3 training
-weights where country is downweighted); a "Reset Defaults" button restores them via an `on_click`
+set a value. Defaults (dial units): Country = 2, Era = 4 (moderate — era is a broad soft signal), and the
+rest = 6 (mirroring the v3 training weights where country is downweighted); a "Preset" button restores them via an `on_click`
 callback. The active weights are echoed under the results as an **"EQ — …"** caption.
 
 Results render as a three-column table — **Album · Artist · Match** — where Match is the weighted
@@ -67,7 +66,7 @@ anywhere along the track to slide the cap.
 | Fader | Options | Keeps |
 |-------|---------|-------|
 | **Live Albums** | Live · Both · Studio | Live = secondary type Live (6); Studio = everything else |
-| **Greatest Hits** | Collections · Both · Albums | Collections = secondary type Compilation (1); Albums = everything else |
+| **Greatest Hits** | Hits · Both · Albums | Hits = secondary type Compilation (1); Albums = everything else |
 
 Both default to **Both** and chain on both the artist-album dropdown and the recommendation
 results, via the generic `filter_by_flag()` helper. The flags are pre-exported to
@@ -88,7 +87,7 @@ mirror, so the knobs and the two faders move fully independently. Streamlit pers
 component's last emitted value; the knob panel is re-seeded from that persisted value each rerun so
 a silent iframe remount restores the user's dials rather than snapping to defaults. After first
 render every iframe **ignores ordinary inbound renders** — only a change to the knob panel's
-`reset_nonce` arg (flipped by the "Reset Defaults" button) makes it re-apply (using each knob's
+`reset_nonce` arg (flipped by the "Preset" button) makes it re-apply (using each knob's
 `defaultValue`) and re-emit so the Python side stays in sync. The faders have no external reset, so
 they ignore all inbound renders after init. This event-based scheme replaced an earlier 600 ms
 time-window guard that caused cross-widget glitches and a stale-value "memory" bug.
@@ -102,15 +101,19 @@ here. Seeds are unaffected — the album dropdown is always built from a selecte
 
 ```mermaid
 flowchart TD
-    A[User types artist name] --> B{Artist found?}
-    B -- No --> C[Show warning]
-    B -- Yes --> D[Dropdown: select artist from matches]
+    A[User types in the artist searchbox] --> D[Live dropdown: matching artists from the lookup, refines per keystroke]
     D --> E{Recommendable albums exist?}
     E -- No --> F[Show info message]
     E -- Yes --> G[Dropdown: select album]
-    G --> H[KNN query across all loaded models]
-    H --> I[Display results in side-by-side columns]
+    G --> H[Weighted-cosine query over the v3 blocks]
+    H --> I[Display Album · Artist · Match% table]
 ```
+
+In `app_v3_weighted.py` the artist step is a `streamlit-searchbox` typeahead (`st_searchbox`):
+matches from the lookup appear and refine as you type. `artist_index()` caches the ~566k unique
+names with a lowercased column for fast per-keystroke substring matching; `make_artist_search()`
+returns the callback (150 ms debounce, prefix hits first, capped at 50). Picking a suggestion goes
+straight to the album dropdown — it replaced the old text input + separate artist selectbox.
 
 ## Data loaded at startup
 
@@ -141,8 +144,14 @@ The summary line below the tables shows how many albums appear in all three, and
 
 ## Key functions
 
+### `make_artist_search(lookup, limit=50)` / `artist_index(lookup)`
+Build the `st_searchbox` callback for the artist typeahead. `artist_index()` caches the unique
+artist names with a precomputed lowercased column; the callback does a case-insensitive substring
+match, orders prefix hits first, and caps the suggestion list at `limit`.
+
 ### `search_artist(name, lookup)`
-Case-insensitive partial string match on `artist_name`. Returns all matching rows from the lookup table.
+Case-insensitive partial string match on `artist_name`, returning all matching rows. Retained as a
+helper (the comparison apps still use it); the current app's artist field uses the typeahead above.
 
 ### `recommend(album_id, n, model, X_knn_norm, album_ids_annotated, album_id_to_row, lookup)`
 Runs a KNN query for the given album across one model, fetches `n * 5` candidates, then:

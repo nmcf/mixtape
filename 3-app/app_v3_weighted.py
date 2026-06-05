@@ -11,6 +11,8 @@ import streamlit.components.v1 as components
 import threading
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 import functools
+import re
+from streamlit_searchbox import st_searchbox
 
 DATA_DIR     = os.path.join(os.path.dirname(__file__), '..', 'data')
 FEATURES_DIR = os.path.join(DATA_DIR, 'features')
@@ -22,6 +24,7 @@ BLOCK_FILES = {
     'record_label': 'album_record_label_matrix.npz',
     'track_stats':  'album_track_stats_matrix.npz',
     'country':      'album_country_matrix.npz',
+    'era':          'album_era_matrix.npz',
 }
 BLOCK_LABELS = {
     'genre':        'Genre',
@@ -29,6 +32,7 @@ BLOCK_LABELS = {
     'record_label': 'Record<br>Label',
     'track_stats':  'Track<br>Stats',
     'country':      'Country',
+    'era':          'Era',
 }
 # Dial range is 0-11. Weight = dial / 11 * 2.0  (0 → 0.0 off, 11 → 2.0 max).
 # Defaults mirror the original training weights:
@@ -39,6 +43,7 @@ DEFAULT_DIALS = {
     'ratings':      6,
     'country':      2,   # downweighted (matches v3 training)
     'track_stats':  6,
+    'era':          4,   # moderate default — era is a soft signal
 }
 
 def dial_to_weight(d):
@@ -142,6 +147,31 @@ def search_artist(name, lookup):
     mask = lookup['artist_name'].str.contains(name, case=False, na=False)
     return lookup[mask]
 
+@st.cache_resource
+def artist_index(_lookup):
+    """Sorted unique artist names with a precomputed lowercased column, so the
+    typeahead can substring-match across all ~566k artists fast per keystroke."""
+    names = pd.Series(sorted(_lookup['artist_name'].dropna().unique()))
+    return pd.DataFrame({'name': names, 'lower': names.str.lower()})
+
+def make_artist_search(lookup, limit=50):
+    """Build the search callback for st_searchbox: case-insensitive substring
+    match, prefix hits first, capped at `limit` suggestions."""
+    idx = artist_index(lookup)
+
+    def _search(query):
+        q = (query or '').strip().lower()
+        if len(q) < 2:
+            return []
+        hits = idx[idx['lower'].str.contains(re.escape(q), na=False)]
+        if hits.empty:
+            return []
+        is_prefix = hits['lower'].str.startswith(q)
+        ordered = pd.concat([hits[is_prefix], hits[~is_prefix]])  # prefix matches first
+        return ordered['name'].head(limit).tolist()
+
+    return _search
+
 def weighted_cosine(row, weights, blocks, ssq, n_albums):
     """Cosine of the seed album row against every album, under per-block weights.
 
@@ -234,7 +264,7 @@ def reset_weights():
     # in session_state, so nothing stale can be written back afterwards.
     st.session_state["knob_reset_flag"] = not st.session_state.get("knob_reset_flag", False)
 
-st.sidebar.button("Reset Defaults", on_click=reset_weights)
+st.sidebar.button("Preset", on_click=reset_weights)
 
 # Seed each knob's `value` from its last emitted value (Streamlit persists the
 # component's return under its key). This way, if Streamlit remounts the iframe
@@ -268,7 +298,7 @@ with st.sidebar:
             "Live Albums", ["Live", "Both", "Studio"], "Both", key="live_switch")
     with _sw_col2:
         hits_mode = blade_switch(
-            "Greatest Hits", ["Collections", "Both", "Albums"], "Both", key="hits_switch")
+            "Greatest Hits", ["Hits", "Both", "Albums"], "Both", key="hits_switch")
 
 # `result` is the dict the knob component last emitted (persisted by key across
 # reruns); falls back to the `default` above before the first render.
@@ -290,65 +320,63 @@ def is_queryable(album_id):
     return row is not None and combined_ssq[row] > 0
 
 # --- Main: artist → album → recommendations ---
-artist_query = st.text_input("Set the Tone — Name an Artist")
+# Live typeahead: matches from the lookup appear and refine as you type.
+selected_artist = st_searchbox(
+    make_artist_search(lookup),
+    label="Set the Tone — Name an Artist",
+    placeholder="Start typing an artist…",
+    key="artist_search",
+)
 
-if artist_query:
-    matches = search_artist(artist_query, lookup)
+if selected_artist:
+    artist_albums = lookup[lookup['artist_name'] == selected_artist]
+    artist_albums = filter_by_flag(artist_albums, live_mode, live_ids, 'Live')
+    artist_albums = filter_by_flag(artist_albums, hits_mode, compilation_ids, 'Hits')
+    album_options = {
+        row['album_name']: album_id
+        for album_id, row in artist_albums.iterrows()
+        if is_queryable(album_id)
+    }
 
-    if matches.empty:
-        st.warning("No artists found. Try a different name.")
+    if not album_options:
+        st.info(
+            "No recommendable albums for this artist under the current weights. "
+            "Try turning more knobs up — sparser features (ratings, record label) "
+            "cover far fewer albums."
+        )
     else:
-        artists = matches['artist_name'].dropna().unique()
-        selected_artist = st.selectbox("Pick the Artist", sorted(artists))
+        selected_album_name = st.selectbox("Pick a Starting Album", sorted(album_options.keys()))
 
-        artist_albums = matches[matches['artist_name'] == selected_artist]
-        artist_albums = filter_by_flag(artist_albums, live_mode, live_ids, 'Live')
-        artist_albums = filter_by_flag(artist_albums, hits_mode, compilation_ids, 'Collections')
-        album_options = {
-            row['album_name']: album_id
-            for album_id, row in artist_albums.iterrows()
-            if is_queryable(album_id)
-        }
+        if selected_album_name:
+            album_id = album_options[selected_album_name]
 
-        if not album_options:
-            st.info(
-                "No recommendable albums for this artist under the current weights. "
-                "Try raising more sliders — sparser features (ratings, record label) "
-                "cover far fewer albums."
-            )
-        else:
-            selected_album_name = st.selectbox("Pick a Starting Album", sorted(album_options.keys()))
+            if all(w == 0.0 for w in weights.values()):
+                st.warning("All knobs are at zero — turn at least one up.")
+            else:
+                recs = recommend(album_id, 10, weights, blocks,
+                                 album_ids, album_id_to_row, ssq, lookup)
 
-            if selected_album_name:
-                album_id = album_options[selected_album_name]
+                if recs is not None and not recs.empty:
+                    recs = filter_by_flag(recs, live_mode, live_ids, 'Live')
+                    recs = filter_by_flag(recs, hits_mode, compilation_ids, 'Hits')
 
-                if all(w == 0.0 for w in weights.values()):
-                    st.warning("All knobs are at zero — turn at least one up.")
+                if recs is None or recs.empty:
+                    st.info("No recommendations available for this album.")
                 else:
-                    recs = recommend(album_id, 10, weights, blocks,
-                                     album_ids, album_id_to_row, ssq, lookup)
-
-                    if recs is not None and not recs.empty:
-                        recs = filter_by_flag(recs, live_mode, live_ids, 'Live')
-                        recs = filter_by_flag(recs, hits_mode, compilation_ids, 'Collections')
-
-                    if recs is None or recs.empty:
-                        st.info("No recommendations available for this album.")
-                    else:
-                        st.subheader("Checkout these albums")
-                        active = " · ".join(
-                            f"{BLOCK_LABELS[k].replace('<br>', ' ')}: {current_dials[k]}"
-                            for k in BLOCK_FILES if weights[k] > 0
-                        )
-                        st.caption(f"EQ — {active}")
-                        st.dataframe(
-                            recs[['Album', 'Artist', 'Match']],
-                            use_container_width=True, hide_index=True,
-                            column_config={
-                                'Album':  st.column_config.TextColumn(width='medium'),
-                                'Artist': st.column_config.TextColumn(width='medium'),
-                                'Match':  st.column_config.NumberColumn(
-                                    width=35, format='%.1f%%'
-                                ),
-                            },
-                        )
+                    st.subheader("Checkout these albums")
+                    active = " · ".join(
+                        f"{BLOCK_LABELS[k].replace('<br>', ' ')}: {current_dials[k]}"
+                        for k in BLOCK_FILES if weights[k] > 0
+                    )
+                    st.caption(f"EQ — {active}")
+                    st.dataframe(
+                        recs[['Album', 'Artist', 'Match']],
+                        use_container_width=True, hide_index=True,
+                        column_config={
+                            'Album':  st.column_config.TextColumn(width='medium'),
+                            'Artist': st.column_config.TextColumn(width='medium'),
+                            'Match':  st.column_config.NumberColumn(
+                                width=35, format='%.1f%%'
+                            ),
+                        },
+                    )

@@ -8,7 +8,7 @@ Three model versions are available for side-by-side comparison in the app.
 
 1. **Data import** — DuckDB notebooks extract artist/album data from a local MusicBrainz PostgreSQL instance and save it as Parquet files.
 2. **EDA** — notebooks explore the raw data at the album, artist, and joined dataset level.
-3. **Features** — sparse feature matrices are built from genre tags, labels, ratings, artist country, and album track statistics.
+3. **Features** — sparse feature matrices are built from genre tags, labels, ratings, artist country, album track statistics, and release era.
 4. **Model** — cosine-distance KNN models are trained on the L2-normalised feature matrix. Three versions exist, each adding more features.
 5. **App** — a Streamlit app serves recommendations in the browser, with a comparison view across all three models.
 
@@ -48,7 +48,7 @@ pip install -r requirements.txt
 streamlit run 3-app/app_v3_weighted.py
 ```
 
-The app opens at **http://localhost:8501**. It serves recommendations from the v3 feature set and lets you reweight features (genre, record label, ratings, country, track stats) in real time using guitar-amp-style **knobs** (0–11) in the sidebar. Two mixing-console-style **vertical faders** — **Live Albums** (Live/Both/Studio) and **Greatest Hits** (Collections/Both/Albums) — narrow results by MusicBrainz release type.
+The app opens at **http://localhost:8501**. Start typing an artist in the live search box to pick one, choose a starting album, and get recommendations from the v3 feature set. You can reweight features (genre, record label, ratings, country, track stats, era) in real time using guitar-amp-style **knobs** (0–11) in the sidebar, and two mixing-console-style **vertical faders** — **Live Albums** (Live/Both/Studio) and **Greatest Hits** (Hits/Both/Albums) — narrow results by MusicBrainz release type.
 
 No database connection is needed — the Parquet files and feature matrices in `data/` are all that's required. (The trained `.joblib` models used by the older comparison apps `app_v2.py`/`app_v3.py` are not committed; retrain them with the v2/v3 notebooks if you want those apps.)
 
@@ -72,6 +72,7 @@ If you want to re-import data or retrain the models, you'll need a MusicBrainz P
 2-Prototyping/10-feature-genre-tags.ipynb       → builds combined genre tag matrix
 2-Prototyping/11-knn-v2-training.ipynb          → trains v2 model → data/model_v2/
 2-Prototyping/12-knn-v3-training.ipynb          → trains v3 model → data/model_v3/
+2-Prototyping/13-feature-era.ipynb              → builds era feature parquet + matrix
 ```
 
 ## Project layout
@@ -85,6 +86,7 @@ mixtape/
 │   ├── 04-EDA-artists.ipynb            Exploratory analysis: artists
 │   ├── 05-EDA-master.ipynb             Exploratory analysis: joined dataset
 │   ├── 06-schema-diagrams.md           Schema and data flow diagrams
+│   ├── 07-EDA-year.ipynb               Exploratory analysis: year/era sources and coverage
 │   └── SchemaSpy/                      Auto-generated HTML schema visualisation
 ├── 2-Prototyping/
 │   ├── 01-feature-tags-labels.ipynb    Build: tag, label, and type sparse matrices
@@ -99,6 +101,7 @@ mixtape/
 │   ├── 10-feature-genre-tags.ipynb     Build: combined genre tag matrix
 │   ├── 11-knn-v2-training.ipynb        Train: v2 KNN model → data/model_v2/
 │   ├── 12-knn-v3-training.ipynb        Train: v3 KNN model → data/model_v3/
+│   ├── 13-feature-era.ipynb            Build: era feature parquet + sparse matrix
 │   ├── feature_charts/                 Saved feature diagnostic plots + regen script
 │   └── queries/                        SQL queries for DuckDB feature extraction
 ├── 3-app/
