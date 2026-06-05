@@ -15,13 +15,18 @@ import functools
 DATA_DIR     = os.path.join(os.path.dirname(__file__), '..', 'data')
 FEATURES_DIR = os.path.join(DATA_DIR, 'features')
 
-# The five v3 feature blocks. Defaults match 12-knn-v3-training.ipynb.
+# The v3 feature blocks + Last.fm popularity block.
+# Defaults match 12-knn-v3-training.ipynb; popularity starts at 4 (noticeable but not dominant).
+_LASTFM_FILE = os.path.join(FEATURES_DIR, 'album_lastfm_popularity_matrix.npz')
+_LASTFM_AVAILABLE = os.path.exists(_LASTFM_FILE)
+
 BLOCK_FILES = {
     'genre':        'album_genre_matrix.npz',
     'ratings':      'album_ratings_matrix.npz',
     'record_label': 'album_record_label_matrix.npz',
     'track_stats':  'album_track_stats_matrix.npz',
     'country':      'album_country_matrix.npz',
+    **({'popularity': 'album_lastfm_popularity_matrix.npz'} if _LASTFM_AVAILABLE else {}),
 }
 BLOCK_LABELS = {
     'genre':        'Genre',
@@ -29,6 +34,7 @@ BLOCK_LABELS = {
     'record_label': 'Record<br>Label',
     'track_stats':  'Track<br>Stats',
     'country':      'Country',
+    'popularity':   'Popularity',
 }
 # Dial range is 0-11. Weight = dial / 11 * 2.0  (0 → 0.0 off, 11 → 2.0 max).
 # Defaults mirror the original training weights:
@@ -39,6 +45,7 @@ DEFAULT_DIALS = {
     'ratings':      6,
     'country':      2,   # downweighted (matches v3 training)
     'track_stats':  6,
+    'popularity':   4,   # Last.fm listeners/scrobbles — moderate default
 }
 
 def dial_to_weight(d):
@@ -227,6 +234,14 @@ compilation_ids = load_flag_ids('mb_album_compilation_flag.parquet')
 st.sidebar.header("Tune your sound")
 st.sidebar.caption("Set the balance to find your sound")
 
+if not _LASTFM_AVAILABLE:
+    st.sidebar.info(
+        "💿 **Popularity knob unavailable** — run notebook "
+        "`2-Prototyping/13-feature-lastfm-popularity.ipynb` first "
+        "to add Last.fm listener/scrobble data.",
+        icon="ℹ️",
+    )
+
 def reset_weights():
     # Flip the nonce only. The knob component watches reset_nonce and, when it
     # changes, snaps every dial back to its default AND re-emits — so `result`
@@ -255,8 +270,9 @@ knob_defs = [
 ]
 
 with st.sidebar:
+    _knob_height = 360 if _LASTFM_AVAILABLE else 280   # 6 knobs need a taller iframe
     result = _knob_component(
-        knobs=knob_defs, key="knob_panel", height=280,
+        knobs=knob_defs, key="knob_panel", height=_knob_height,
         reset_nonce=st.session_state.get("knob_reset_flag", False),
         default={name: DEFAULT_DIALS[name] for name in BLOCK_FILES},
     )

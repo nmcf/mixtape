@@ -15,6 +15,12 @@ duckdb  # only needed to re-import data from Postgres (1-EDA/01-postgres-to-parq
 # App
 streamlit
 
+# Scraping
+requests
+beautifulsoup4
+filelock
+openpyxl
+
 # Environment
 jupyterlab
 ipykernel
