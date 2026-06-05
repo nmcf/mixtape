@@ -7,7 +7,8 @@ run it. Train v2/v3 only if you want the comparison apps.
 ## Prerequisites
 
 - Python environment with dependencies installed (`pip install -r requirements.txt` from the project root)
-- The base parquets + v1 features already built (notebooks `1-EDA/01`–`02`, `2-Prototyping/01`–`04`)
+- The base parquets + v1 features already built (notebooks `1-EDA/01`–`02`, then in `2-Prototyping`:
+  `01-album-artist-index`, `feature-genre`, `feature-label`, `02-feature-ratings`, `03`, `04`)
 
 ---
 
@@ -59,9 +60,13 @@ Expected: `X_track_stats shape: (1758488, 12)`, ~19.3 M non-zero entries.
 
 ## Step 5 — Build the genre tag matrix (v3 only)
 
-Run all cells in `2-Prototyping/10-feature-genre-tags.ipynb` → writes `data/features/album_genre_matrix.npz`.
+Run all cells in `2-Prototyping/feature-genre.ipynb` → writes `data/features/album_genre_matrix.npz`
+(also rebuilds `album_tags_matrix.npz` and `artist_tags_matrix.npz`). Requires `album_ids.pkl` /
+`artist_ids.pkl` from `01-album-artist-index.ipynb` first.
 
-Combines album + artist + label tags. Expected: `(1758488, 10255)`, ~5.9 M non-zero entries.
+Combines album + artist + label tags via the three-tier blend (universal artist tags, masked label
+reinforcement, allowlist label rescue — see [03-features.md](03-features.md)). Expected:
+`(1758488, 10255)`, ~5.45 M non-zero entries, covering 1,210,648 albums (68.8%).
 
 ---
 

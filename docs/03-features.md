@@ -1,8 +1,16 @@
 # Feature Engineering
 
-**Notebooks:** `2-Prototyping/01` through `02` (v1 features), `08` through `10` (v2/v3 features)
+**Notebooks:** `2-Prototyping/01-album-artist-index` (shared row index), `feature-genre`,
+`feature-label`, `02-feature-ratings` (v1 features), `08` / `09` / `13` (v2/v3 features).
+Exploratory analysis of the tag/label features is in `1-EDA/EDA-tags-labels.ipynb`.
 
 Transforms raw MusicBrainz data into sparse numeric matrices for the KNN model. Three model versions use progressively richer feature sets.
+
+> **Notebook layout note:** the tag/label build was split out of the retired
+> `01-feature-tags-labels.ipynb` and `10-feature-genre-tags.ipynb`. `01-album-artist-index.ipynb`
+> now owns the master `album_ids.pkl` / `artist_ids.pkl` index (run first); `feature-genre.ipynb`
+> builds the album, artist, and blended genre tag matrices; `feature-label.ipynb` builds the label,
+> type, and combined record-label matrices. The unnumbered notebooks will be renumbered later.
 
 ## Feature matrices (`data/features/`)
 
@@ -54,19 +62,41 @@ This replaced an earlier scheme that weighted by `tag_count`, which systematical
 
 ## Genre tag matrix (`album_genre_matrix.npz`)
 
-Built by `10-feature-genre-tags.ipynb`. Combines three tag sources into a single matrix:
+Built by `feature-genre.ipynb`. Combines three tag sources into a single matrix using a **three-tier
+strategy**. Tags appearing fewer than 10 times across all three sources combined are dropped; rows
+are L1-normalised after combining so each album's profile sums to 1.0.
 
-| Source | Weight | Condition |
-|--------|--------|-----------|
-| Album tags (direct MusicBrainz tags) | 1.0 | Always |
-| Artist tags | 0.5 | Only for albums with < 5 direct tags |
-| Label tags | 0.3 | Always |
+| Tier | Source | Weight | Condition |
+|------|--------|--------|-----------|
+| 1 | Album tags (direct MusicBrainz tags) | 1.0 | All albums |
+| 2 | Artist tags (via primary artist) | 0.5 | All albums |
+| 3a | Label tags — **reinforcement** | 0.3 | Masked to tags the album or artist already has |
+| 3b | Label tags — **rescue** | 0.3 | Allowlist labels only, and only for albums with no other signal |
 
-92.6% of albums have fewer than 5 direct tags, so artist tags are blended for the large majority. Tags appearing fewer than 10 times across all three sources combined are dropped. Rows are L1-normalised after combining so each album's profile sums to 1.0.
+**Universal artist tags (tier 2).** Artist tags are blended for *all* albums, not just sparsely
+tagged ones. The earlier `< 5 direct tags` threshold was dropped: applying artist tags everywhere
+adds **richness** to already-covered albums (sharper similarity) even though it adds no new
+**coverage** (a well-tagged album already had signal). See `EDA-tags-labels.ipynb` for the
+coverage-vs-richness analysis.
+
+**Label tag masking (tier 3a).** Applied unconditionally, label tags are mostly noise: a large,
+genre-diverse label (e.g. a major) carries tags from across its whole catalogue that don't describe
+any one album. ~87% of raw label-tag entries fail to match the album's own album/artist signal and
+are masked out. The survivors only *reinforce* genre tags the album already has — a label "jazz" tag
+boosts an album already tagged jazz, but the label's "pop"/"rock" tags are zeroed for that album.
+
+**Label allowlist rescue (tier 3b).** For albums with zero album and artist signal, allowlist labels
+may *introduce* genre tags as a last resort. A label joins the allowlist if **≥60% of its albums
+share at least one tag with the label** (its per-album overlap rate) — a direct measure of genre
+coherence. Label size and `label_type` proved to be poor proxies (coherence is bimodal at every
+size), so the overlap rate is used instead. The allowlist is computed once at build time.
 
 When a tag ID appears in more than one source for the same album, all sources write to the **same column** and their weighted contributions sum — overlapping tags reinforce rather than duplicate.
 
-Result: 10,255 tag columns vs 2,684 in the original album-only matrix (5.9M non-zero entries vs 2.4M), covering 1,318,601 albums.
+Result: 10,255 tag columns vs 2,684 in the album-only matrix (~5.45M non-zero entries), covering
+**1,210,648 albums (68.8%)**. This is close to the tag-signal ceiling — the remaining ~31% have no
+album tags, an untagged artist, and no allowlist label, so no honest tag-based signal exists for
+them. Lowering the 60% allowlist threshold would add coverage only by reintroducing label noise.
 
 ## Artist country matrix (`album_country_matrix.npz`)
 

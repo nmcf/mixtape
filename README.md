@@ -60,7 +60,9 @@ If you want to re-import data or retrain the models, you'll need a MusicBrainz P
 1-EDA/01-postgres-to-parquet.ipynb              → imports Parquet files from Postgres
 1-EDA/02-parquet-to-dataframes.ipynb            → builds pickled DataFrames
 
-2-Prototyping/01-feature-tags-labels.ipynb      → builds tag, label, and type sparse matrices
+2-Prototyping/01-album-artist-index.ipynb       → builds master album/artist ID index (run first)
+2-Prototyping/feature-genre.ipynb               → builds album, artist, and blended genre tag matrices
+2-Prototyping/feature-label.ipynb               → builds label, type, and record_label matrices
 2-Prototyping/02-feature-ratings.ipynb          → builds Bayesian-weighted rating matrices
 2-Prototyping/03-feature-assembly.ipynb         → inspects and validates the combined matrix
 2-Prototyping/04-knn-training.ipynb             → trains v1 model → data/model/
@@ -69,11 +71,15 @@ If you want to re-import data or retrain the models, you'll need a MusicBrainz P
 2-Prototyping/07-build-album-track-stats.ipynb  → builds album track stats parquet (needs Postgres)
 2-Prototyping/08-feature-country.ipynb          → builds country feature matrix
 2-Prototyping/09-feature-track-stats.ipynb      → builds track stats feature matrix
-2-Prototyping/10-feature-genre-tags.ipynb       → builds combined genre tag matrix
 2-Prototyping/11-knn-v2-training.ipynb          → trains v2 model → data/model_v2/
 2-Prototyping/12-knn-v3-training.ipynb          → trains v3 model → data/model_v3/
 2-Prototyping/13-feature-era.ipynb              → builds era feature parquet + matrix
 ```
+
+> The tag/label feature build was split out of the old `01-feature-tags-labels.ipynb` and
+> `10-feature-genre-tags.ipynb` into `01-album-artist-index.ipynb` (the shared row index) plus
+> `feature-genre.ipynb` and `feature-label.ipynb`. The unnumbered feature notebooks will be
+> renumbered in a later cleanup pass.
 
 ## Project layout
 
@@ -87,9 +93,12 @@ mixtape/
 │   ├── 05-EDA-master.ipynb             Exploratory analysis: joined dataset
 │   ├── 06-schema-diagrams.md           Schema and data flow diagrams
 │   ├── 07-EDA-year.ipynb               Exploratory analysis: year/era sources and coverage
+│   ├── EDA-tags-labels.ipynb           Exploratory analysis: tag/label coverage + genre blend
 │   └── SchemaSpy/                      Auto-generated HTML schema visualisation
 ├── 2-Prototyping/
-│   ├── 01-feature-tags-labels.ipynb    Build: tag, label, and type sparse matrices
+│   ├── 01-album-artist-index.ipynb     Build: master album/artist ID index (run first)
+│   ├── feature-genre.ipynb             Build: album, artist, and blended genre tag matrices
+│   ├── feature-label.ipynb             Build: label, type, and record_label matrices
 │   ├── 02-feature-ratings.ipynb        Build: Bayesian-weighted rating matrices
 │   ├── 03-feature-assembly.ipynb       Inspect: combined feature matrix
 │   ├── 04-knn-training.ipynb           Train: v1 KNN model → data/model/
@@ -98,7 +107,6 @@ mixtape/
 │   ├── 07-build-album-track-stats.ipynb Build: album track stats parquet (needs Postgres)
 │   ├── 08-feature-country.ipynb        Build: country feature matrix
 │   ├── 09-feature-track-stats.ipynb    Build: track stats feature matrix
-│   ├── 10-feature-genre-tags.ipynb     Build: combined genre tag matrix
 │   ├── 11-knn-v2-training.ipynb        Train: v2 KNN model → data/model_v2/
 │   ├── 12-knn-v3-training.ipynb        Train: v3 KNN model → data/model_v3/
 │   ├── 13-feature-era.ipynb            Build: era feature parquet + sparse matrix
