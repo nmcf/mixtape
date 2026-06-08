@@ -1,6 +1,6 @@
 # Streamlit App
 
-**Files:** `5-app/app.py` (v1), `5-app/app_v2.py` (v1 vs v2), `5-app/app_v3.py` (v1 vs v2 vs v3), `5-app/app_v3_weighted.py` (v3 with weight knobs + filters)
+**Files:** `5-app/app.py` (v1), `5-app/app_v2.py` (v1 vs v2), `5-app/app_v3.py` (v1 vs v2 vs v3), `5-app/app_v3_weighted.py` (v3 with weight knobs + filters — **current**), `5-app/app_v6.py` (experimental on-the-fly cosine with v3/v4 features)
 
 `app_v3_weighted.py` is the current active app.
 
@@ -21,6 +21,7 @@ The app opens at `http://localhost:8501` by default.
 | `app_v2.py` | v1 vs v2 side-by-side | `data/model/`, `data/model_v2/` joblibs |
 | `app_v3.py` | v1 vs v2 vs v3 side-by-side | all three joblibs |
 | `app_v3_weighted.py` | **v3 features with runtime weight knobs + album filters (current)** | raw feature matrices + flag parquets — no trained model |
+| `app_v6.py` | experimental — on-the-fly cosine with v3/v4 features | raw feature matrices |
 
 The comparison apps (`app_v2.py`, `app_v3.py`) load trained `.joblib` models, which are **not
 committed** (gitignored) — retrain via the v2/v3 notebooks to use them. The current weighted app
@@ -28,9 +29,8 @@ needs only the committed feature matrices.
 
 ## Weighted app — `app_v3_weighted.py`
 
-Instead of a pre-fitted KNN model, this app loads six raw feature blocks (genre, record_label,
-ratings, country, track_stats, era) and precomputes each block's per-album sum-of-squares once
-at startup. Sidebar **knobs** set a weight per block; per query it computes weighted cosine directly:
+Instead of a pre-fitted KNN model, this app loads raw feature blocks (genre, record_label,
+ratings, country, track_stats, era, and optionally popularity) and precomputes each block's per-album sum-of-squares once at startup. Sidebar **knobs** set a weight per block; per query it computes weighted cosine directly:
 
 ```
 numerator   = Σ_b w_b² · (X_b · q_b)
@@ -47,9 +47,13 @@ never offers an album that would return no recommendations.
 The sidebar header reads **"Tune your sound"**. Each feature block is a guitar-amp-style rotary
 knob (custom component, `5-app/knob_component/index.html`) reading **0–11**, mapped to a block
 weight by `dial_to_weight(d) = d/11·2.0` (0 → off, 11 → 2.0 max). Click a tick around the ring to
-set a value. Defaults (dial units): Country = 2, Era = 4 (moderate — era is a broad soft signal), and the
-rest = 6 (mirroring the v3 training weights where country is downweighted); a "Preset" button restores them via an `on_click`
+set a value. Defaults (dial units): Country = 2, Era = 4, Popularity = 4 (both moderate — soft signals), and the
+rest = 6 (mirroring the v3 training weights); a "Preset" button restores them via an `on_click`
 callback. The active weights are echoed under the results as an **"EQ — …"** caption.
+
+The app always shows **5 knobs** — Genre, Record Label, Track Stats, Country, Era — plus a 6th **Popularity** knob that appears automatically when `data/features/album_lastfm_popularity_matrix.npz` exists. If the file is missing an info message is shown and the app falls back gracefully.
+
+**Ratings has no knob.** The ratings block is always loaded but its weight is not user-controllable. Instead it **auto-syncs to the Popularity dial** — turning up Popularity boosts both Last.fm listener/scrobble signal and community ratings together, treating them as complementary engagement measures. When the popularity file is missing, ratings defaults to a fixed weight of dial 6 (≈ 1.09).
 
 Results render as a three-column table — **Album · Artist · Match** — where Match is the weighted
 cosine shown as a right-aligned percentage to one decimal (`st.column_config.NumberColumn`,
@@ -127,6 +131,7 @@ All resources are cached with `@st.cache_resource` and load once per server proc
 | country matrix | `data/features/album_country_matrix.npz` | Country feature block |
 | track_stats matrix | `data/features/album_track_stats_matrix.npz` | Track stats feature block |
 | era matrix | `data/features/album_era_matrix.npz` | Era feature block |
+| popularity matrix | `data/features/album_lastfm_popularity_matrix.npz` | Popularity feature block (optional — loaded if present) |
 | album index | `data/features/album_ids.pkl` | Master row index |
 | lookup table | `data/mb_album_artists.parquet` | Maps album IDs to names and artist names |
 | live flag | `data/mb_album_live_flag.parquet` | Live Albums fader filter |

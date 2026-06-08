@@ -123,6 +123,33 @@ erDiagram
     mb_album ||--o| mb_album_artists : "primary artist"
 ```
 
+## Last.fm scraper (`1-data/05-lastfm-scraper.ipynb`)
+
+Parallel web scraper that collects listener and scrobble counts from Last.fm for every (artist, album) pair in `mb_album_artists.parquet`. Outputs `data/lastfm_data.parquet`, which feeds the popularity feature matrix built in `3-features/13-feature-lastfm-popularity.ipynb`.
+
+| Config | Default | Notes |
+|--------|---------|-------|
+| `WORKER_ID` | 0 | Unique per VSCode window (0–3) |
+| `TOTAL_WORKERS` | 4 | How many parallel windows are running |
+| `SAVE_EVERY` | 50 | Flush to parquet every N rows |
+| `START_FROM` | None | Manual row range start (overrides auto slice) |
+| `END_AT` | None | Manual row range end |
+
+Multiple workers can run simultaneously — `filelock` prevents write races and each worker refreshes its done-set every 500 rows to skip rows already scraped by others. The scraper is resumable; re-running from the same `WORKER_ID` automatically skips already-scraped (artist, album) pairs.
+
+**Output:** `data/lastfm_data.parquet` — 207,893 rows × 9 columns (`Artist`, `Album`, `Artist_Listeners`, `Artist_Scrobbles`, `Album_Listeners`, `Album_Scrobbles`, `Similar_Artists`, `Artist_URL`, `Album_URL`). Numeric columns are stored as comma-formatted strings and cleaned in the feature notebook.
+
+### Flag queries (`1-data/queries/`)
+
+Two DuckDB SQL queries export album-type flags from the MusicBrainz Postgres instance, used by the Live Albums and Greatest Hits faders in the app.
+
+| Query file | Output parquet | Secondary type |
+|---|---|---|
+| `mb_album_live_flag_duckdb.sql` | `data/mb_album_live_flag.parquet` | Live (type ID 6) |
+| `mb_album_compilation_flag_duckdb.sql` | `data/mb_album_compilation_flag.parquet` | Compilation (type ID 1) |
+
+Each output is a single `album_id` column — presence in the file means the flag applies to that album.
+
 ## Notes
 
 - The album scope is defined once in the `valid_albums` table and every album export joins to it. Scope: primary `type = 1` (Album), **must have an Official release** (drops bootlegs), and one of — studio (no secondary types), live (secondary type Live), or single-artist best-of (secondary type Compilation, non-VA). All other secondary types (Soundtrack, Remix, DJ-mix, Demo, …) and Various-Artists compilations are excluded. Validated: U2 goes from 1,004 → 45 release groups.
