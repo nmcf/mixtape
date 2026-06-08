@@ -1,8 +1,8 @@
 # Datasets — Building DataFrames
 
-**Notebook:** `1-EDA/02-parquet-to-dataframes.ipynb`
+**Notebook:** `1-data/02-parquet-to-dataframes.ipynb`
 
-Loads the raw Parquet files into pandas DataFrames, enriches them, and persists the results as pickles for use in later stages.
+Loads the raw Parquet files into pandas DataFrames, enriches them, and persists the results as pickles for use in the EDA notebooks.
 
 ## Output files
 
@@ -10,7 +10,6 @@ Loads the raw Parquet files into pandas DataFrames, enriches them, and persists 
 |------|-------------|
 | `data/pickles/final_album_df.pkl` | One row per album with all scalar features and tag dicts |
 | `data/pickles/final_artist_df.pkl` | One row per artist with scalar features and tag dict |
-| `data/pickles/master_df.pkl` | Albums joined with their primary artist's features |
 
 ## Processing steps
 
@@ -54,18 +53,6 @@ Left-joins artists with ratings and aggregated artist tag dict.
 
 **Columns:** `id`, `name`, `artist_year`, `type`, `area`, `gender`, `rating`, `rating_count`, `artist_tags`
 
-### 5. Build `master_df`
-
-Joins `final_album_df` with `final_artist_df` on `artist_credit → id`, bringing the artist's year, type, area, gender, rating, and tags onto each album row.
-
-```mermaid
-flowchart LR
-    A[final_album_df] -->|left join on artist_credit = id| B[final_artist_df]
-    B --> C[master_df]
-```
-
-`master_df` is the fully-denormalised view used for EDA and feature weight exploration.
-
 ## Join diagram
 
 ```mermaid
@@ -95,24 +82,6 @@ erDiagram
         int rating_count
         dict artist_tags
     }
-    master_df {
-        int album_id PK
-        string album_name
-        int artist_credit FK
-        float album_rating
-        int album_rating_count
-        string country
-        int album_year
-        int label_id
-        dict album_tags
-        dict label_tags
-        int artist_year
-        int artist_type
-        float artist_rating
-        dict artist_tags
-    }
 
     final_album_df }o--|| final_artist_df : "artist_credit = id"
-    final_album_df ||--|| master_df : "enriched into"
-    final_artist_df ||--o{ master_df : "contributes artist fields"
 ```
