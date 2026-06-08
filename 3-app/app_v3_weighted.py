@@ -20,17 +20,21 @@ FEATURES_DIR = os.path.join(DATA_DIR, 'features')
 _LASTFM_FILE = os.path.join(FEATURES_DIR, 'album_lastfm_popularity_matrix.npz')
 _LASTFM_AVAILABLE = os.path.exists(_LASTFM_FILE)
 
+# All feature matrices loaded — ratings is always loaded but has no knob.
 BLOCK_FILES = {
     'genre':        'album_genre_matrix.npz',
-    'ratings':      'album_ratings_matrix.npz',
+    'ratings':      'album_ratings_matrix.npz',   # hidden — synced to popularity
     'record_label': 'album_record_label_matrix.npz',
     'track_stats':  'album_track_stats_matrix.npz',
     'country':      'album_country_matrix.npz',
     **({'popularity': 'album_lastfm_popularity_matrix.npz'} if _LASTFM_AVAILABLE else {}),
 }
+
+# Knob blocks — ratings excluded (no knob shown for it).
+KNOB_BLOCKS = {k: v for k, v in BLOCK_FILES.items() if k != 'ratings'}
+
 BLOCK_LABELS = {
     'genre':        'Genre',
-    'ratings':      'Ratings',
     'record_label': 'Record<br>Label',
     'track_stats':  'Track<br>Stats',
     'country':      'Country',
@@ -42,7 +46,6 @@ BLOCK_LABELS = {
 DEFAULT_DIALS = {
     'genre':        6,
     'record_label': 6,
-    'ratings':      6,
     'country':      2,   # downweighted (matches v3 training)
     'track_stats':  6,
     'popularity':   4,   # Last.fm listeners/scrobbles — moderate default
@@ -263,18 +266,21 @@ def _dial(name):
     except (TypeError, ValueError):
         return DEFAULT_DIALS[name]
 
+# ratings is not in DEFAULT_DIALS (no knob) — safe to skip in _dial
+
 knob_defs = [
     {"id": name, "label": BLOCK_LABELS[name],
      "value": _dial(name), "defaultValue": DEFAULT_DIALS[name]}
-    for name in BLOCK_FILES
+    for name in KNOB_BLOCKS
 ]
 
 with st.sidebar:
-    _knob_height = 360 if _LASTFM_AVAILABLE else 280   # 6 knobs need a taller iframe
+    # 5 knobs when no popularity, 5 knobs when popularity present (ratings removed)
+    _knob_height = 280
     result = _knob_component(
         knobs=knob_defs, key="knob_panel", height=_knob_height,
         reset_nonce=st.session_state.get("knob_reset_flag", False),
-        default={name: DEFAULT_DIALS[name] for name in BLOCK_FILES},
+        default={name: DEFAULT_DIALS[name] for name in KNOB_BLOCKS},
     )
 
 with st.sidebar:
@@ -288,15 +294,22 @@ with st.sidebar:
 
 # `result` is the dict the knob component last emitted (persisted by key across
 # reruns); falls back to the `default` above before the first render.
-current_dials = {name: int(result.get(name, DEFAULT_DIALS[name])) for name in BLOCK_FILES}
-weights = {name: dial_to_weight(current_dials[name]) for name in BLOCK_FILES}
+current_dials = {name: int(result.get(name, DEFAULT_DIALS[name])) for name in KNOB_BLOCKS}
+weights = {name: dial_to_weight(current_dials[name]) for name in KNOB_BLOCKS}
+
+# Ratings has no knob — its weight is synced to popularity.
+# If popularity is unavailable, fall back to a fixed medium weight (dial 6 ≈ 1.09).
+if _LASTFM_AVAILABLE:
+    weights['ratings'] = weights['popularity']
+else:
+    weights['ratings'] = dial_to_weight(6)
 
 # An album can only be queried if it has signal in a block whose weight is > 0.
 # Combined query-norm² under the current weights = sum_b w_b² * ssq_b. Albums
 # where this is zero have nothing to match on, so they are hidden from the
 # album dropdown to avoid offering albums that would return no recommendations.
 combined_ssq = np.zeros(len(album_ids), dtype=np.float64)
-for name in BLOCK_FILES:
+for name in BLOCK_FILES:   # includes ratings
     w2 = weights[name] ** 2
     if w2:
         combined_ssq += w2 * ssq[name]
@@ -354,7 +367,7 @@ if artist_query:
                         st.subheader("Checkout these albums")
                         active = " · ".join(
                             f"{BLOCK_LABELS[k].replace('<br>', ' ')}: {current_dials[k]}"
-                            for k in BLOCK_FILES if weights[k] > 0
+                            for k in KNOB_BLOCKS if weights[k] > 0
                         )
                         st.caption(f"EQ — {active}")
                         st.dataframe(
