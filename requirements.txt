@@ -3,13 +3,17 @@ pandas
 numpy
 scikit-learn
 scipy
-ipywidgets
 ydata-profiling
+joblib
+matplotlib
+seaborn
 
 # Database Connection
-SQLAlchemy
-psycopg2-binary
-duckdb
+duckdb  # only needed to re-import data from Postgres (1-EDA/01-postgres-to-parquet.ipynb)
+                # and for feature extraction (2-Prototyping/06, 07)
+
+# App
+streamlit
 
 # Environment
 jupyterlab
