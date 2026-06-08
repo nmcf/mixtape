@@ -18,3 +18,4 @@ data/model/
 
 # Ignore local AI environment artifacts
 .claude/
+data/model*/*.joblib
