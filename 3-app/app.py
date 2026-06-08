@@ -112,31 +112,36 @@ def render_results_table(recs, title, subtitle="", show_similarity=True):
     """, unsafe_allow_html=True)
 
     # Determine the score column
-    score_col = 'Similarity' if show_similarity and 'Similarity' in recs.columns else 'Tag Score'
+    score_col = 'Similarity' if show_similarity and 'Similarity' in recs.columns else 'Match'
     has_score = score_col in recs.columns
     vals = recs[score_col].to_numpy(dtype=float) if has_score else np.ones(len(recs))
     lo, hi = vals.min(), vals.max()
     rng = (hi - lo) or 1.0
 
+    has_tags_matched = 'Tags Matched' in recs.columns
+
     rows_html = ""
-    for i, r in enumerate(recs.itertuples(index=False), start=1):
-        score_val = getattr(r, score_col.replace(' ', '_'), 0) if has_score else 0
+    for i in range(len(recs)):
+        row = recs.iloc[i]
+        score_val = float(vals[i]) if has_score else 0
         fill = 18 + (score_val - lo) / rng * 82 if has_score else 50
 
-        album = _html.escape(str(getattr(r, 'Album', '?')))
-        artist = _html.escape(str(getattr(r, 'Artist', '?')))
-        year = getattr(r, 'Year', '')
+        album = _html.escape(str(row.get('Album', '?')))
+        artist = _html.escape(str(row.get('Artist', '?')))
+        year = row.get('Year', '')
         year_str = f" · {year}" if year else ""
         extra_info = ""
-        if hasattr(r, 'Tags_Matched'):
-            extra_info = f"<span style='font-family:DM Mono;font-size:.7rem;color:var(--dim);'>{r.Tags_Matched} tags</span>"
+        if has_tags_matched:
+            tm = int(row['Tags Matched'])
+            extra_info = (f"<span style='font-family:DM Mono;font-size:.7rem;color:var(--dim);'>"
+                          f"{tm} tag{'s' if tm != 1 else ''}</span>")
 
-        score_display = f"{score_val:.4f}" if show_similarity else str(int(score_val))
+        score_display = f"{score_val:.4f}" if show_similarity else f"{int(score_val)}%"
 
         rows_html += f"""
         <div style="display:grid;grid-template-columns:38px 1fr 160px;gap:1rem;align-items:center;
              padding:.85rem .2rem;border-bottom:1px solid var(--rowline);">
-          <div style="font-family:'DM Mono';font-size:1.05rem;color:var(--gold-deep);text-align:center;">{i:02d}</div>
+          <div style="font-family:'DM Mono';font-size:1.05rem;color:var(--gold-deep);text-align:center;">{i+1:02d}</div>
           <div><div style="font-family:'DM Serif Display',serif;font-size:1.08rem;color:var(--txt);">{album}</div>
                <div style="font-size:.86rem;color:var(--dim);">{artist}{year_str} {extra_info}</div></div>
           <div><div style="text-align:right;font-family:'DM Mono';font-size:.82rem;color:var(--gold);">{score_display}</div>
@@ -153,7 +158,7 @@ def render_results_table(recs, title, subtitle="", show_similarity=True):
            background:color-mix(in srgb,var(--gold) 8%,transparent);font-family:'DM Mono';
            font-size:.62rem;letter-spacing:.16em;color:var(--gold);">
         <div style="text-align:center;">#</div><div>ALBUM · ARTIST</div>
-        <div style="text-align:right;">{'SIMILARITY' if show_similarity else 'TAG SCORE'}</div></div>
+        <div style="text-align:right;">{'SIMILARITY' if show_similarity else 'MATCH'}</div></div>
       <div style="padding:0 1rem;">{rows_html}</div>
     </div>""", unsafe_allow_html=True)
 

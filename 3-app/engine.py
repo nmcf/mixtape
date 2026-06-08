@@ -40,6 +40,16 @@ def load_lookup():
     )
 
 
+@st.cache_resource
+def load_album_country():
+    """album_id → country area_id mapping (cached). None if file absent."""
+    path = _find_parquet('mb_album_country.parquet')
+    if not path:
+        return None
+    ac = pd.read_parquet(path)
+    return ac.drop_duplicates('album_id').set_index('album_id')['country']
+
+
 def _find_parquet(name):
     """Resolve a parquet file that might live under data/ or data/raw/."""
     for sub in ['raw', '']:
@@ -304,17 +314,33 @@ def explore_search(selected_tag_ids, country_id, year_range,
     if matches.empty:
         return None
 
-    # Score each album by sum of tag_counts for matching tags
+    # Matched score = sum of tag_count for the selected tags this album has
     scored = matches.groupby('album_id')['tag_count'].sum().reset_index()
-    scored.columns = ['album_id', 'tag_score']
-    # Also count how many of the selected tags this album has
+    scored.columns = ['album_id', 'matched_count']
+    # How many of the selected tags this album carries
     tag_hits = matches.groupby('album_id')['tag_id'].nunique().reset_index()
     tag_hits.columns = ['album_id', 'tags_matched']
     scored = scored.merge(tag_hits, on='album_id')
 
-    # Step 2: filter to only "recommendable" albums (those in the feature matrix)
+    # Step 2: filter to "recommendable" albums (in the feature matrix)
     recommendable = set(album_id_to_row.keys())
     scored = scored[scored['album_id'].isin(recommendable)]
+    if scored.empty:
+        return None
+
+    # Relevance: how much of the album's TOTAL tagging is the selected genres.
+    # This stops mega-popular albums (tagged with everything at count 1) from
+    # dominating, and makes genre-defining albums rise instead.
+    cand_ids = set(scored['album_id'])
+    totals = (album_tags_df[album_tags_df['album_id'].isin(cand_ids)]
+              .groupby('album_id')['tag_count'].sum().reset_index())
+    totals.columns = ['album_id', 'total_count']
+    scored = scored.merge(totals, on='album_id', how='left')
+    scored['relevance'] = scored['matched_count'] / scored['total_count'].clip(lower=1)
+    # Need a few tags total for relevance to mean anything
+    scored = scored[scored['total_count'] >= 3]
+    if scored.empty:
+        return None
 
     # Step 3: optionally filter by year
     if album_meta_df is not None and year_range is not None:
@@ -327,19 +353,21 @@ def explore_search(selected_tag_ids, country_id, year_range,
 
     # Step 4: optionally filter by country
     if country_id is not None:
-        country_path = _find_parquet('mb_album_country.parquet')
-        if country_path:
-            acountry = pd.read_parquet(country_path)
-            country_albums = set(acountry[acountry['country'] == country_id]['album_id'])
+        ac = load_album_country()
+        if ac is not None:
+            country_albums = set(ac.index[ac == country_id])
             scored = scored[scored['album_id'].isin(country_albums)]
 
     if scored.empty:
         return None
 
-    # Step 5: rank and join names
-    scored = scored.nlargest(max_results * 3, 'tag_score')  # extra room for dedup
+    # Step 5: rank — by how central the selected genres are to each album
+    # (relevance), with tag-match count as a tiebreaker. Relevance-primary stops
+    # mega-popular "tagged with everything" albums from dominating.
+    scored = scored.sort_values(['relevance', 'tags_matched'],
+                                ascending=[False, False]).head(max_results * 4)
     results = []
-    seen_artists = set()
+    artist_counts = {}
     for _, row in scored.iterrows():
         aid = int(row['album_id'])
         if aid not in lookup.index:
@@ -348,9 +376,11 @@ def explore_search(selected_tag_ids, country_id, year_range,
         artist = str(lr.get('artist_name', '')) if lr.get('artist_name') is not None else ''
         if not artist or artist == 'Various Artists':
             continue
-        # Soft artist dedup: max 2 per artist
-        if seen_artists.get(artist, 0) if isinstance(seen_artists, dict) else False:
-            pass
+        # Cap at 2 albums per artist for variety
+        if artist_counts.get(artist, 0) >= 2:
+            continue
+        artist_counts[artist] = artist_counts.get(artist, 0) + 1
+
         album_name = str(lr.get('album_name', '')) if lr.get('album_name') is not None else '(unknown)'
         year_val = row.get('album_year')
         year_str = str(int(year_val)) if pd.notna(year_val) and year_val is not None else ''
@@ -358,7 +388,7 @@ def explore_search(selected_tag_ids, country_id, year_range,
             'Album':         album_name,
             'Artist':        artist,
             'Tags Matched':  int(row['tags_matched']),
-            'Tag Score':     int(row['tag_score']),
+            'Match':         int(round(row['relevance'] * 100)),
             'Year':          year_str,
             'album_id':      aid,
         })
@@ -390,17 +420,11 @@ def get_album_info(album_id, lookup, explore_data):
                 info['year'] = int(y)
 
     if country_options and album_tags_df is not None:
-        country_path = _find_parquet('mb_album_country.parquet')
-        if country_path:
-            try:
-                ac = pd.read_parquet(country_path)
-                row = ac[ac['album_id'] == album_id]
-                if not row.empty:
-                    cid = row.iloc[0]['country']
-                    inv = {v: k for k, v in country_options.items()}
-                    info['country'] = inv.get(cid, '')
-            except Exception:
-                pass
+        ac = load_album_country()
+        if ac is not None and album_id in ac.index:
+            cid = ac.loc[album_id]
+            inv = {v: k for k, v in country_options.items()}
+            info['country'] = inv.get(cid, '')
 
     if album_tags_df is not None and tag_options:
         inv = {v: k for k, v in tag_options.items()}

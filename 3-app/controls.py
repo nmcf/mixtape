@@ -137,20 +137,6 @@ def render_controls(T, **_kw):
             if n in result:
                 st.session_state[f"lvl_{n}"] = _knob_to_level(result[n])
 
-    # ── Signal summary (one compact row per block) ──
-    if tune_scores:
-        with st.sidebar:
-            for n in names:
-                s = tune_scores.get(n)
-                if s is not None:
-                    pct = int(round(s * 100))
-                    st.markdown(
-                        f"<div style='display:flex;justify-content:space-between;padding:0 .1rem;"
-                        f"font-family:DM Mono;font-size:.5rem;line-height:1.4;'>"
-                        f"<span style='color:var(--dim);'>{BLOCK_LABELS[n]}</span>"
-                        f"<span style='color:var(--gold);'>SIG {pct}%</span></div>",
-                        unsafe_allow_html=True)
-
     st.sidebar.markdown("<hr style='margin:.3rem 0;'>", unsafe_allow_html=True)
 
 
