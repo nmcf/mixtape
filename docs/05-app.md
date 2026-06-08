@@ -1,6 +1,6 @@
 # Streamlit App
 
-**Files:** `3-app/app.py` (v1), `3-app/app_v2.py` (v1 vs v2), `3-app/app_v3.py` (v1 vs v2 vs v3), `3-app/app_v3_weighted.py` (v3 with weight knobs + filters)
+**Files:** `5-app/app.py` (v1), `5-app/app_v2.py` (v1 vs v2), `5-app/app_v3.py` (v1 vs v2 vs v3), `5-app/app_v3_weighted.py` (v3 with weight knobs + filters)
 
 `app_v3_weighted.py` is the current active app.
 
@@ -8,7 +8,7 @@
 
 ```bash
 source env/bin/activate
-streamlit run 3-app/app_v3_weighted.py
+streamlit run 5-app/app_v3_weighted.py
 ```
 
 The app opens at `http://localhost:8501` by default.
@@ -45,7 +45,7 @@ never offers an album that would return no recommendations.
 ### Feature knobs
 
 The sidebar header reads **"Tune your sound"**. Each feature block is a guitar-amp-style rotary
-knob (custom component, `3-app/knob_component/index.html`) reading **0–11**, mapped to a block
+knob (custom component, `5-app/knob_component/index.html`) reading **0–11**, mapped to a block
 weight by `dial_to_weight(d) = d/11·2.0` (0 → off, 11 → 2.0 max). Click a tick around the ring to
 set a value. Defaults (dial units): Country = 2, Era = 4 (moderate — era is a broad soft signal), and the
 rest = 6 (mirroring the v3 training weights where country is downweighted); a "Preset" button restores them via an `on_click`
@@ -58,7 +58,7 @@ cosine shown as a right-aligned percentage to one decimal (`st.column_config.Num
 ### Album filters
 
 Two mixing-console-style **vertical faders** below the knobs (custom component,
-`3-app/knob_component/switch.html`, placed side by side with `st.columns(2)`) filter results by
+`5-app/knob_component/switch.html`, placed side by side with `st.columns(2)`) filter results by
 MusicBrainz release-group **secondary type** — an exact schema lookup, not an album-name guess.
 Each fader has three detents with the option labels at top / middle / bottom; click a label or
 anywhere along the track to slide the cap.
@@ -71,7 +71,7 @@ anywhere along the track to slide the cap.
 Both default to **Both** and chain on both the artist-album dropdown and the recommendation
 results, via the generic `filter_by_flag()` helper. The flags are pre-exported to
 `data/mb_album_live_flag.parquet` and `data/mb_album_compilation_flag.parquet` (single `album_id`
-column each) by the matching `2-Prototyping/queries/*_flag_duckdb.sql`, then loaded into sets by
+column each) by the matching `1-data/queries/*_flag_duckdb.sql`, then loaded into sets by
 `load_flag_ids()`. This replaced an earlier album-name keyword heuristic that mis-classified
 titles with no "live" keyword (e.g. "Set List", date-format concert titles).
 
@@ -121,12 +121,16 @@ All resources are cached with `@st.cache_resource` and load once per server proc
 
 | Resource | Source | Purpose |
 |----------|--------|---------|
-| v1 model + matrix | `data/model/` | Runs v1 recommendations |
-| v2 model + matrix | `data/model_v2/` | Runs v2 recommendations |
-| v3 model + matrix | `data/model_v3/` | Runs v3 recommendations |
-| Lookup table | `data/mb_album_artists.parquet` | Maps album IDs to names and artist names |
-
-The album dropdown is filtered to albums present in any model's index — albums with no features in any model are hidden.
+| genre matrix | `data/features/album_genre_matrix.npz` | Genre feature block |
+| record_label matrix | `data/features/album_record_label_matrix.npz` | Label feature block |
+| ratings matrix | `data/features/album_ratings_matrix.npz` | Ratings feature block |
+| country matrix | `data/features/album_country_matrix.npz` | Country feature block |
+| track_stats matrix | `data/features/album_track_stats_matrix.npz` | Track stats feature block |
+| era matrix | `data/features/album_era_matrix.npz` | Era feature block |
+| album index | `data/features/album_ids.pkl` | Master row index |
+| lookup table | `data/mb_album_artists.parquet` | Maps album IDs to names and artist names |
+| live flag | `data/mb_album_live_flag.parquet` | Live Albums fader filter |
+| compilation flag | `data/mb_album_compilation_flag.parquet` | Greatest Hits fader filter |
 
 ## Highlight logic (`app_v3.py`)
 

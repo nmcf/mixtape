@@ -1,6 +1,6 @@
 # Model — KNN Training & Query
 
-**Notebooks:** `2-Prototyping/04-knn-training.ipynb` (v1), `11-knn-v2-training.ipynb` (v2), `12-knn-v3-training.ipynb` (v3)
+**Notebooks:** `4-model/01-knn-v1-training.ipynb` (v1), `4-model/03-knn-v2-training.ipynb` (v2), `4-model/04-knn-v3-training.ipynb` (v3)
 
 Three KNN model versions, each adding more features. All share the same training pipeline and query logic.
 
@@ -10,9 +10,9 @@ Numbers are after the album-scope rebuild (universe = 1,758,488).
 
 | Version | New features vs previous | Features (post-prune) | Albums indexed | Notebook |
 |---------|--------------------------|-----------------------|----------------|----------|
-| v1 | baseline (tags · labels · types · ratings) | 5,653 | 1,070,021 | 04-knn-training.ipynb |
-| v2 | + artist country, track stats | 7,679 | 1,758,005 | 11-knn-v2-training.ipynb |
-| v3 | genre tags (album+artist+label) + consolidated record_label | 15,247 | 1,758,047 | 12-knn-v3-training.ipynb |
+| v1 | baseline (tags · labels · types · ratings) | 5,653 | 1,070,021 | 01-knn-v1-training.ipynb |
+| v2 | + artist country, track stats | 7,679 | 1,758,005 | 03-knn-v2-training.ipynb |
+| v3 | genre tags (album+artist+label) + consolidated record_label | 15,247 | 1,758,047 | 04-knn-v3-training.ipynb |
 
 v1/v2 use the separate `album_labels_matrix` + `album_types_matrix`; v3 uses the combined `album_record_label_matrix`. v2/v3 index far more albums than v1 because their dense country/track-stats blocks give nearly every album some signal, whereas v1's tag-only feature set leaves ~0.7M albums empty.
 
