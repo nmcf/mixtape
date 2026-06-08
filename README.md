@@ -65,7 +65,9 @@ mixtape/
 │   ├── 02-parquet-to-dataframes.ipynb       Build: Parquet → pickled DataFrames (EDA only)
 │   ├── 03-feature-country-import.ipynb      Import: artist country SQL → Parquet (needs Postgres)
 │   ├── 04-feature-track-stats-import.ipynb  Import: track stats SQL → Parquet (needs Postgres)
-│   └── queries/                             SQL queries for DuckDB Postgres extraction
+│   ├── queries/                             SQL queries for DuckDB Postgres extraction
+│   ├── schema-diagrams.md                   Parquet table relationships and pipeline data flow
+│   └── SchemaSpy/                           Auto-generated HTML reference for the MusicBrainz Postgres schema
 ├── 2-eda/
 │   ├── 01-EDA-albums.ipynb                  Exploratory analysis: albums + key design decisions
 │   ├── 02-EDA-artists.ipynb                 Exploratory analysis: artists + key design decisions
@@ -96,8 +98,6 @@ mixtape/
 │   ├── mb_*.parquet                         Raw MusicBrainz exports (committed)
 │   ├── sql_feature_*.parquet                Country + track-stats feature exports (committed)
 │   ├── features/                            Sparse feature matrices + index (.npz, .pkl) (committed)
-│   ├── schema-diagrams.md                   Parquet table relationships and pipeline data flow
-│   ├── SchemaSpy/                           Auto-generated HTML reference for the MusicBrainz Postgres schema
 │   ├── model/                               v1 model artefacts (gitignored)
 │   ├── model_v2/                            v2 model artefacts (gitignored)
 │   ├── model_v3/                            v3 model artefacts (gitignored)
@@ -116,4 +116,4 @@ mixtape/
 | [03-features.md](docs/03-features.md) | Feature engineering and Bayesian ratings |
 | [04-model.md](docs/04-model.md) | KNN training pipeline |
 | [05-app.md](docs/05-app.md) | Streamlit app walkthrough |
-| [data/schema-diagrams.md](data/schema-diagrams.md) | Parquet table relationships and pipeline data flow |
+| [1-data/schema-diagrams.md](1-data/schema-diagrams.md) | Parquet table relationships and pipeline data flow |
