@@ -15,6 +15,7 @@ BLOCK_FILES = {
     'ratings':      'album_ratings_matrix.npz',
     'country':      'album_country_matrix.npz',
     'track_stats':  'album_track_stats_matrix.npz',
+    'era':          'album_era_matrix.npz',
 }
 LEVEL_OPTIONS  = ['Off', 'Low', 'Medium', 'High']
 WEIGHT_LEVELS  = {'Off': 0.0, 'Low': 0.3, 'Medium': 1.0, 'High': 2.0}
@@ -24,6 +25,7 @@ DEFAULT_LEVELS = {
     'ratings':      'Medium',
     'country':      'Low',
     'track_stats':  'Medium',
+    'era':          'Low',
 }
 BLOCK_LABELS = {
     'genre':        'Genre',
@@ -31,6 +33,7 @@ BLOCK_LABELS = {
     'ratings':      'Ratings',
     'country':      'Country',
     'track_stats':  'Track Stats',
+    'era':          'Era',
 }
 BLOCK_BANDS = {
     'genre':        '88.1',
@@ -38,6 +41,7 @@ BLOCK_BANDS = {
     'ratings':      '101.5',
     'country':      '105.3',
     'track_stats':  '108.9',
+    'era':          '112.3',
 }
 
 # ---------------------------------------------------------------------------
@@ -45,15 +49,15 @@ BLOCK_BANDS = {
 # ---------------------------------------------------------------------------
 PRESETS = {
     'Full Mix':              {'genre': 'Medium', 'record_label': 'Medium', 'ratings': 'Medium',
-                              'country': 'Low',  'track_stats': 'Medium'},
+                              'country': 'Low',  'track_stats': 'Medium', 'era': 'Low'},
     'Genre Purist':          {'genre': 'High',   'record_label': 'Off',    'ratings': 'Off',
-                              'country': 'Off',  'track_stats': 'Off'},
+                              'country': 'Off',  'track_stats': 'Off',    'era': 'Off'},
     'Same Vibe, New Artist': {'genre': 'High',   'record_label': 'Medium', 'ratings': 'Off',
-                              'country': 'Off',  'track_stats': 'Medium'},
+                              'country': 'Off',  'track_stats': 'Medium', 'era': 'Medium'},
     'Local Sound':           {'genre': 'Medium', 'record_label': 'Off',    'ratings': 'Off',
-                              'country': 'High', 'track_stats': 'Off'},
+                              'country': 'High', 'track_stats': 'Off',    'era': 'Off'},
     "Critics' Pick":         {'genre': 'Low',    'record_label': 'Off',    'ratings': 'High',
-                              'country': 'Off',  'track_stats': 'Off'},
+                              'country': 'Off',  'track_stats': 'Off',    'era': 'Off'},
 }
 PRESET_DESCRIPTIONS = {
     'Full Mix':              'Balanced blend of all features — the default starting point.',
