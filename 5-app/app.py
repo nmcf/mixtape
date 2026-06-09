@@ -14,13 +14,14 @@ import html as _html
 import streamlit as st
 import numpy as np
 import pandas as pd
+from streamlit_searchbox import st_searchbox
 
 from config import (BLOCK_FILES, KNOB_BLOCKS, BLOCK_LABELS,
                     EXPLORE_TOP_N_TAGS, EXPLORE_RESULTS)
 from style import get_theme, inject_css
 from engine import (load_blocks, load_lookup, load_explore_data,
                     load_secondary_types,
-                    search_artist, recommend, explore_search,
+                    make_artist_search, recommend, explore_search,
                     get_album_info, per_block_similarity)
 from controls import (render_presets, render_auto_tune_buttons,
                       render_controls, render_content_filters, get_weights)
@@ -188,28 +189,27 @@ with tab_similar:
             st.session_state.pop('explore_seed', None)
             st.rerun()
     else:
-        artist_query = st.text_input("Artist",
-                                     placeholder="e.g. Radiohead, Eminem, Miles Davis…")
+        # Live typeahead — suggestions appear and refine as you type.
+        selected_artist = st_searchbox(
+            make_artist_search(lookup),
+            label="Artist",
+            placeholder="Start typing an artist…",
+            key="artist_search",
+        )
         album_id = None
-        if artist_query:
-            matches = search_artist(artist_query, lookup)
-            if matches.empty:
-                st.warning("No artists found. Try a different name.")
+        if selected_artist:
+            artist_albums = lookup[lookup['artist_name'] == selected_artist]
+            album_options = {row['album_name']: aid
+                             for aid, row in artist_albums.iterrows()
+                             if is_queryable(aid)}
+            if not album_options:
+                st.info("No recommendable albums under current weights. Raise more channels.")
             else:
-                artists = matches['artist_name'].dropna().unique()
-                selected_artist = st.selectbox("Pick the Artist", sorted(artists))
-                artist_albums = matches[matches['artist_name'] == selected_artist]
-                album_options = {row['album_name']: aid
-                                 for aid, row in artist_albums.iterrows()
-                                 if is_queryable(aid)}
-                if not album_options:
-                    st.info("No recommendable albums under current weights. Raise more channels.")
-                else:
-                    selected_album_name = st.selectbox("Pick a Starting Album",
-                                                       sorted(album_options.keys()))
-                    if selected_album_name:
-                        album_id = album_options[selected_album_name]
-                        st.session_state['seed_album_id'] = album_id
+                selected_album_name = st.selectbox("Pick a Starting Album",
+                                                   sorted(album_options.keys()))
+                if selected_album_name:
+                    album_id = album_options[selected_album_name]
+                    st.session_state['seed_album_id'] = album_id
 
     # Render Album Card + Recommendations (shared by both search and explore-seed paths)
     album_id = st.session_state.get('seed_album_id')

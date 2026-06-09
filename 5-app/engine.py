@@ -1,6 +1,7 @@
 """Core recommendation engine — data loading, queries, auto-tune, and explore."""
 
 import os
+import re
 import pickle
 import numpy as np
 import pandas as pd
@@ -133,8 +134,36 @@ def load_explore_data():
 # ───────────────────────────────────────────────────────────────────────────
 
 def search_artist(name, lookup):
+    """Substring match over the full lookup. Kept as a non-reactive fallback."""
     mask = lookup['artist_name'].str.contains(name, case=False, na=False)
     return lookup[mask]
+
+
+@st.cache_resource
+def artist_index(_lookup):
+    """Sorted unique artist names + a precomputed lowercased column, so the
+    typeahead can substring-match across all ~566k artists fast per keystroke."""
+    names = pd.Series(sorted(_lookup['artist_name'].dropna().unique()))
+    return pd.DataFrame({'name': names, 'lower': names.str.lower()})
+
+
+def make_artist_search(lookup, limit=50):
+    """Build the search callback for st_searchbox: case-insensitive substring
+    match, prefix hits first, capped at `limit` suggestions."""
+    idx = artist_index(lookup)
+
+    def _search(query):
+        q = (query or '').strip().lower()
+        if len(q) < 2:
+            return []
+        hits = idx[idx['lower'].str.contains(re.escape(q), na=False)]
+        if hits.empty:
+            return []
+        is_prefix = hits['lower'].str.startswith(q)
+        ordered = pd.concat([hits[is_prefix], hits[~is_prefix]])  # prefix matches first
+        return ordered['name'].head(limit).tolist()
+
+    return _search
 
 
 # ───────────────────────────────────────────────────────────────────────────
