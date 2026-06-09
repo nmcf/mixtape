@@ -1,12 +1,22 @@
 # Feature Assembly Review
 
-## What the assembly notebook does today
+## Status
 
-`3-features/08-feature-assembly.ipynb` is a **read-only diagnostic notebook**. It loads four
-feature matrices, hstacks them, and computes sparsity statistics and column-pruning thresholds.
-It writes nothing to disk — no assembled matrix, no model input. Its purpose is inspection only.
+| Task | Status |
+|---|---|
+| 1. Rewrite assembly notebook with v3 feature set | ✅ Done |
+| 2. Leave 5 unused matrices out; document in merge-sql.md | ✅ Done |
+| 3. Move v1 matrices to archive; gitignore; add deprecation notes | ✅ Done |
+| 4. Track down instrument/role_family provenance; add to merge-sql.md | ✅ Done |
 
-The four blocks it currently loads:
+---
+
+## Original findings
+
+### What the assembly notebook was doing (v1, now replaced)
+
+`3-features/08-feature-assembly.ipynb` was written against the v1 feature set and never
+updated. It loaded four stale blocks and wrote nothing to disk.
 
 | Block | File | Shape | nnz |
 |---|---|---|---|
@@ -16,34 +26,30 @@ The four blocks it currently loads:
 | Ratings | `album_ratings_matrix.npz` | 2,241,402 × 1 | 44,334 |
 | **Combined** | — | **2,241,402 × 6,521** | **3,853,425** |
 
+The app was using a completely different feature set. The notebook gave an inaccurate picture
+of production.
+
 ---
 
-## What actually exists in `data/features/`
+### What `data/features/` contains
 
-21 files — 15 sparse matrices, plus index/metadata files:
-
-**Sparse matrices:**
-
-| File | Producing notebook | In assembly? | In app? |
+| File | Producing notebook | In assembly (new)? | In app? |
 |---|---|---|---|
-| `album_tags_matrix.npz` | 02-feature-genre | ✅ | ❌ |
-| `album_labels_matrix.npz` | 03-feature-label | ✅ | ❌ |
-| `album_types_matrix.npz` | 03-feature-label | ✅ | ❌ |
 | `album_ratings_matrix.npz` | 04-feature-ratings | ✅ | ✅ (hidden) |
-| `album_genre_matrix.npz` | 02-feature-genre | ❌ | ✅ |
-| `album_record_label_matrix.npz` | 03-feature-label | ❌ | ✅ |
-| `album_track_stats_matrix.npz` | 06-feature-track-stats | ❌ | ✅ |
-| `album_country_matrix.npz` | 05-feature-country | ❌ | ✅ |
-| `album_era_matrix.npz` | 07-feature-era | ❌ | ✅ |
-| `album_lastfm_popularity_matrix.npz` | 13-feature-lastfm-popularity | ❌ | ✅ (optional) |
-| `album_year_matrix.npz` | 10-feature-year | ❌ | ❌ |
-| `album_contributor_counts_matrix.npz` | 09-feature-contributors | ❌ | ❌ |
-| `album_instrument_matrix.npz` | — | ❌ | ❌ |
-| `album_role_family_matrix.npz` | — | ❌ | ❌ |
-| `album_tag_parent_matrix.npz` | 11/12-feature-tag-* | ❌ | ❌ |
+| `album_genre_matrix.npz` | 02-feature-genre | ✅ | ✅ |
+| `album_record_label_matrix.npz` | 03-feature-label | ✅ | ✅ |
+| `album_track_stats_matrix.npz` | 06-feature-track-stats | ✅ | ✅ |
+| `album_country_matrix.npz` | 05-feature-country | ✅ | ✅ |
+| `album_era_matrix.npz` | 07-feature-era | ✅ | ✅ |
+| `album_lastfm_popularity_matrix.npz` | 13-feature-lastfm-popularity | ✅ (optional) | ✅ (optional) |
+| `album_year_matrix.npz` | 10-feature-year | ❌ pending review | ❌ |
+| `album_contributor_counts_matrix.npz` | 09-feature-contributors | ❌ pending review | ❌ |
+| `album_instrument_matrix.npz` | 09-feature-contributors | ❌ pending review | ❌ |
+| `album_role_family_matrix.npz` | 09-feature-contributors | ❌ pending review | ❌ |
+| `album_tag_parent_matrix.npz` | 11/12-feature-tag-* | ❌ pending review | ❌ |
 
-**Index / metadata:**
-- `album_ids.pkl` — master row index (shared by all matrices)
+**Index / metadata (unchanged):**
+- `album_ids.pkl` — master row index
 - `artist_ids.pkl` — artist row index
 - `album_era.parquet` — per-album year/era for audit
 - `album_tag_parent_columns.json` — tag hierarchy column map
@@ -51,7 +57,7 @@ The four blocks it currently loads:
 
 ---
 
-## What the app loads
+### What the app loads
 
 `5-app/app_v3_weighted.py` (`BLOCK_FILES`):
 
@@ -67,104 +73,96 @@ The four blocks it currently loads:
 
 ---
 
-## The core problem: the assembly notebook is stale
+## Task notes
 
-The assembly notebook was written against the v1 feature set (tags + labels + types + ratings).
-The project has since moved on to a v3 feature set (genre + record_label + track_stats + country
-+ era + ratings) and added a seventh optional block (popularity). The assembly notebook never
-caught up — it has no awareness of six of the seven blocks the app currently uses, and it still
-references two blocks (raw tags, label types) that the app no longer loads at all.
+### 1. Assembly notebook rewritten ✅
 
-As a result the notebook gives a misleading picture of the actual assembled feature space. Any
-sparsity stats, column counts, or pruning thresholds it computes describe a feature set that no
-longer matches production.
+`08-feature-assembly.ipynb` has been rewritten to load the v3 blocks (genre, record_label,
+track_stats, country, era, ratings, popularity optional). The new notebook:
+
+- Loads all blocks and asserts row-count alignment to `album_ids.pkl`
+- Reports shape, nnz, and album coverage per block
+- Shows per-block column nnz breakdown (min/median/max/singletons)
+- Plots column nnz histogram and CDF for the combined matrix
+- Sweeps pruning thresholds and plots album zeroing curve
+- Computes the safe threshold and shows per-block column survival
+
+The old expansion logic (re-mapping from a 1M-album subset to the 2.2M universe) is no longer
+needed — v3 matrices are built at the full 1,758,488-album universe from the start.
 
 ---
 
-## Matrices that exist but nothing uses
+### 2. Five unused matrices — deferred to per-feature review ✅
 
-Four matrices are built and committed but loaded by neither the assembly notebook nor the app:
+The five matrices below are built and committed but not yet integrated. Each needs individual
+evaluation before being added to the app. They have been documented in
+`Planning/merge-sql.md` under "Committed matrices pending review".
 
-| File | Notebook | Notes |
+| File | Producing notebook | Decision |
 |---|---|---|
-| `album_year_matrix.npz` | 10-feature-year | Continuous year signal; overlaps with era but finer-grained |
-| `album_contributor_counts_matrix.npz` | 09-feature-contributors | Contributor/credit counts per album |
-| `album_instrument_matrix.npz` | no notebook found | Unknown provenance |
-| `album_role_family_matrix.npz` | no notebook found | Unknown provenance |
-| `album_tag_parent_matrix.npz` | 11/12-feature-tag-* | Tag hierarchy parents |
-
-`album_instrument_matrix.npz` and `album_role_family_matrix.npz` have no corresponding feature
-notebook in `3-features/` — unclear whether they were built by an older notebook that's been
-deleted or moved to archive.
+| `album_role_family_matrix.npz` | 09-feature-contributors | Pending review |
+| `album_instrument_matrix.npz` | 09-feature-contributors | Pending review |
+| `album_contributor_counts_matrix.npz` | 09-feature-contributors | Pending review |
+| `album_year_matrix.npz` | 10-feature-year | Pending review |
+| `album_tag_parent_matrix.npz` | 11/12-feature-tag-* | Pending review |
 
 ---
 
-## What needs to happen
+### 3. v1 matrices archived and gitignored ✅
 
-### 1. Update `08-feature-assembly.ipynb` to reflect the current feature set
+`album_tags_matrix.npz`, `album_labels_matrix.npz`, and `album_types_matrix.npz` have been:
+- Moved to `archive/` via `git mv`
+- Added to `.gitignore` under `data/features/` so regenerated copies stay untracked
 
-Replace the four v1 blocks with the seven blocks the app actually uses:
+**Why these were superseded:**
 
-```
-genre              album_genre_matrix.npz
-record_label       album_record_label_matrix.npz
-track_stats        album_track_stats_matrix.npz
-country            album_country_matrix.npz
-era                album_era_matrix.npz
-ratings            album_ratings_matrix.npz
-popularity         album_lastfm_popularity_matrix.npz   (optional)
-```
+`album_tags_matrix.npz` was produced by the old `01-feature-tags-labels.ipynb` notebook
+(since deleted and split). It contained only direct MusicBrainz album tags — no artist tags,
+no label tags. `album_genre_matrix.npz` (built by `02-feature-genre.ipynb`) supersedes it
+with a three-tier blend: album tags (weight 1.0) + artist tags applied universally (weight 0.5)
++ masked label tag reinforcement and allowlist rescue (weight 0.3). Genre coverage improved
+from ~40% (album tags only) to 68.8% (1,210,648 albums), and the tag vocabulary grew from
+2,684 to 10,255 columns.
 
-The sparsity analysis, column-pruning threshold, and coverage stats should all be recomputed
-against this set. The old tags/labels/types blocks can be left in a note explaining they were
-the v1 feature set.
-
-### 2. Decide what to do with the unused matrices
-
-Each of the five unused matrices needs a decision:
-
-- **`album_year_matrix.npz`** — the continuous year signal could complement era (which is
-  binned). Worth evaluating whether adding it as an 8th block improves results. A knob already
-  exists conceptually (Era is at dial 4); year could be bundled with era or given its own dial.
-
-- **`album_contributor_counts_matrix.npz`** — contributor counts could help distinguish
-  solo albums from ensemble projects. Needs evaluation before adding a knob.
-
-- **`album_tag_parent_matrix.npz`** — the tag hierarchy feature could improve coverage for
-  niche albums by backing off to broader genre parents. Worth a systematic evaluation (does it
-  help, or does it blur distinctions?).
-
-- **`album_instrument_matrix.npz`** / **`album_role_family_matrix.npz`** — track down their
-  provenance first. If no producing notebook exists they may be orphaned artefacts from an old
-  branch and should be moved to archive.
-
-### 3. Clarify the role of old v1 matrices
-
-`album_tags_matrix.npz`, `album_labels_matrix.npz`, and `album_types_matrix.npz` are still
-committed and referenced by the assembly notebook but the app no longer uses them. They have
-been superseded by `album_genre_matrix.npz` (richer, blended) and
-`album_record_label_matrix.npz` (consolidated labels + types). Consider:
-
-- Adding a note in the assembly notebook labelling them as v1/deprecated
-- Deciding whether to keep them committed (they are large) or gitignore them
-
-### 4. Track down missing notebook provenance
-
-`album_instrument_matrix.npz` and `album_role_family_matrix.npz` have no visible source
-notebook. Check git log for when they were first committed and which branch they came from.
-
-```bash
-git log --all --oneline -- data/features/album_instrument_matrix.npz
-git log --all --oneline -- data/features/album_role_family_matrix.npz
-```
+`album_labels_matrix.npz` and `album_types_matrix.npz` were produced by the same old
+notebook. They encoded record labels and release types as separate blocks. Both were
+consolidated into `album_record_label_matrix.npz` (built by `03-feature-label.ipynb`) via
+`hstack`, removing the need to treat them separately in training and the app. The label
+weighting was also corrected at this point — the old scheme weighted by `tag_count` and
+systematically underweighted boutique labels; the new scheme uses equal per-(album, label)
+weighting with explicit deduplication.
 
 ---
 
-## Summary
+### 4. Instrument and role_family provenance resolved ✅
 
-| Issue | Priority |
-|---|---|
-| Assembly notebook stale — doesn't reflect v3 feature set | High |
-| Five committed matrices are unused by both assembly and app | Medium |
-| Two matrices have no visible producing notebook | Medium |
-| v1 matrices (tags, labels, types) still committed alongside v3 replacements | Low |
+Both `album_instrument_matrix.npz` and `album_role_family_matrix.npz` are produced by
+`3-features/09-feature-contributors.ipynb`. The confusion arose because the feature_review
+was written before `09-feature-contributors.ipynb` was integrated from the contributors
+branch.
+
+**Commit:** `c75d946` — "feat: contributor feature matrices, V3 model, and updated comparison
+app" — Author: niboDS, 8 Jun 2026. This commit also introduced `album_contributor_counts_matrix.npz` and the weight tuning notebooks.
+
+**What `09-feature-contributors.ipynb` builds (all from recording/work/release contributor
+parquets with confidence weights 1.0 / 0.9 / 0.6):**
+
+| Matrix | Shape (old universe) | What it encodes |
+|---|---|---|
+| `album_role_family_matrix.npz` | 1,008,102 × 7 | Normalised role-family profile (performance, production, writing, technical, visual_packaging, business_label, other) |
+| `album_instrument_matrix.npz` | 1,008,102 × 591 | Normalised instrument profile; instruments on ≥10 albums only |
+| `album_contributor_counts_matrix.npz` | 1,008,102 × 7 | Distinct contributor counts per role family, min-max scaled |
+
+**Note:** all three matrices were built against the old 1,008,102-album universe. They must
+be rebuilt against the current 1,758,488-album universe before evaluation or integration.
+This is tracked in `Planning/merge-sql.md`.
+
+---
+
+## Remaining open questions
+
+- Should `album_year_matrix` complement or replace era binning? (continuous vs. one-hot)
+- Do contributor/instrument features improve recommendation quality enough to justify the
+  extra query dimensions? Needs evaluation via `4-model/06-evaluate-lastfm.ipynb`.
+- Should tag parents improve coverage for niche albums, or blur genre distinctions? Needs A/B
+  evaluation before merging into the genre block or adding as a separate knob.
