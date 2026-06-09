@@ -29,7 +29,7 @@ BLOCK_FILES = {
     'record_label': 'album_record_label_matrix.npz',
     'track_stats':  'album_track_stats_matrix.npz',
     'country':      'album_country_matrix.npz',
-    'era':          'album_era_matrix.npz',
+    'era':          'album_temporal_matrix.npz',
     **({'popularity': 'album_lastfm_popularity_matrix.npz'} if _LASTFM_AVAILABLE else {}),
 }
 

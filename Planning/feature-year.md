@@ -228,7 +228,7 @@ loses something important.
 
 ---
 
-## Implementation plan
+## Implementation status\n\n| Step | Status |\n|---|---|\n| Build `14-feature-temporal.ipynb` | ✅ Done — saves `album_temporal_matrix.npz` and `album_year_col.npz` |\n| Build `05-tune-temporal-ratio.ipynb` | ✅ Done — ready to run; outputs `temporal_best_ratio.json` |\n| Swap app to `album_temporal_matrix.npz` | ✅ Done — `BLOCK_FILES['era']` updated in `app_v3_weighted.py` |\n| Set YEAR_WEIGHT analytically | ✅ Done — set to 0.3 (see analysis below) |\n| Update docs | ✅ Done — `docs/03-features.md` updated |\n\n---\n\n## Implementation plan
 
 ### Step 1 — Data quality alignment
 
@@ -309,9 +309,44 @@ in `archive/`, and keep the era block as-is.
 
 ---
 
+## Year weight analysis (why 0.3)
+
+The year column is min-max scaled over the full `best_year` range in the data: **975–2026
+(span = 1,051 years)**. This has a critical consequence for what the column can actually do
+inside the temporal block.
+
+A single decade (10 years) is only 10/1051 ≈ **0.95% of the [0,1] range**. Two albums in the
+same era bin but at opposite ends of the decade (e.g. 1970 and 1979) differ by only 0.0085 in
+scaled year space. In cosine similarity that difference is invisible — changing YEAR_WEIGHT from
+0 to 1.0 moves the same-era cosine by less than 0.00001. **Intra-decade differentiation is
+effectively zero regardless of YEAR_WEIGHT.**
+
+The year column's only meaningful effect is **era-boundary smoothing**: albums released just
+before or after a decade boundary (e.g. Dec 1969 / Jan 1970) fall in different era bins and
+have zero era cosine. The year column gives them non-zero temporal similarity. At the Era dial
+default (dial 4, W_temporal ≈ 0.73):
+
+| YEAR_WEIGHT | 1969/1970 temporal cosine | Full cosine contribution |
+|-------------|--------------------------|--------------------------|
+| 0.00 | 0.000 | 0.000 |
+| 0.25 | 0.053 | 0.028 |
+| **0.30** | **0.097** | **0.041** |
+| 0.50 | 0.183 | 0.097 |
+| 1.00 | 0.472 | 0.250 |
+
+The bridging is also blunt — "1989 vs 2000" (11yr, cross-era) looks almost identical to
+"1969 vs 1970" (1yr, boundary) because both are compressed into a tiny slice of [0,1]. Higher
+weights start pulling genuinely different eras together indiscriminately.
+
+**0.3** gives era-boundary pairs a ~0.04 nudge in the full cosine — enough to lift true
+boundary albums slightly in rankings without overriding genre and label similarity.
+
+The `lastfm_album_similarity.parquet` ground truth dataset needed for formal tuning does not
+exist in the repo (see `05-tune-temporal-ratio.ipynb` comments). 0.3 was set analytically.
+
 ## Open questions
 
-- What era:year internal ratio is optimal? Start at 1.0:0.5; tune via evaluator.
+- What era:year internal ratio is optimal? **Answered analytically: 0.3** — see analysis above.
 - Does the artist-begin fallback introduce more noise than signal? The EDA shows that albums
   with `best_year_source = artist_begin` are the noisiest group — consider excluding them from
   the year column (zero them out) even if they keep their era bin.
