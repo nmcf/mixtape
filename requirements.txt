@@ -14,6 +14,7 @@ duckdb  # only needed to re-import data from Postgres (1-EDA/01-postgres-to-parq
 
 # App
 streamlit
+streamlit-searchbox
 
 # Scraping
 requests
