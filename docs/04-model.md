@@ -1,8 +1,8 @@
 # Model — KNN Training & Query
 
-**Notebooks:** `2-Prototyping/04-knn-training.ipynb` (v1), `11-knn-v2-training.ipynb` (v2), `12-knn-v3-training.ipynb` (v3)
+**Notebooks:** `4-model/01-knn-v1-training.ipynb` (v1), `4-model/03-knn-v2-training.ipynb` (v2), `4-model/04-knn-v3-training.ipynb` (v3), `4-model/05-knn-v4-training.ipynb` (v4 — in progress). Evaluation in `4-model/06-evaluate-lastfm.ipynb`. Weight tuning experiments in `4-model/tuning/`.
 
-Three KNN model versions, each adding more features. All share the same training pipeline and query logic.
+Three shipped KNN model versions, each adding more features. All share the same training pipeline and query logic.
 
 ## Model versions
 
@@ -10,11 +10,14 @@ Numbers are after the album-scope rebuild (universe = 1,758,488).
 
 | Version | New features vs previous | Features (post-prune) | Albums indexed | Notebook |
 |---------|--------------------------|-----------------------|----------------|----------|
-| v1 | baseline (tags · labels · types · ratings) | 5,653 | 1,070,021 | 04-knn-training.ipynb |
-| v2 | + artist country, track stats | 7,679 | 1,758,005 | 11-knn-v2-training.ipynb |
-| v3 | genre tags (album+artist+label) + consolidated record_label | 15,247 | 1,758,047 | 12-knn-v3-training.ipynb |
+| v1 | baseline (tags · labels · types · ratings) | 5,653 | 1,070,021 | 01-knn-v1-training.ipynb |
+| v2 | + artist country, track stats | 7,679 | 1,758,005 | 03-knn-v2-training.ipynb |
+| v3 | genre tags (album+artist+label) + consolidated record_label | 15,247 | 1,758,047 | 04-knn-v3-training.ipynb |
+| v4 | + era, further feature work | TBD | TBD | 05-knn-v4-training.ipynb |
 
 v1/v2 use the separate `album_labels_matrix` + `album_types_matrix`; v3 uses the combined `album_record_label_matrix`. v2/v3 index far more albums than v1 because their dense country/track-stats blocks give nearly every album some signal, whereas v1's tag-only feature set leaves ~0.7M albums empty.
+
+**v4 is in progress** — `05-knn-v4-training.ipynb` and the tuning notebooks in `4-model/tuning/` are experimental. `06-evaluate-lastfm.ipynb` evaluates recommendation quality against Last.fm listening data. The current production app (`app_v3_weighted.py`) does not use a trained model artefact — it applies weights at runtime directly over the raw feature matrices.
 
 > **Note:** the trained model artefacts (`data/model/`, `data/model_v2/`, `data/model_v3/`) are gitignored — large and regenerable. The current app (`app_v3_weighted.py`) reads the raw feature matrices directly and needs no trained model; see [05-app.md](05-app.md).
 
