@@ -32,6 +32,97 @@ Single-column matrix, aligned to `album_ids.pkl`. Year is min-max scaled to [0, 
 
 ---
 
+## Can imputed years improve era coverage?
+
+**Short answer: probably yes, but we haven't exported the data yet.**
+
+### Where the 2.1% Unknown gap comes from
+
+The era notebook's fallback chain leaves **33,025 albums** (2.1%) with no year in any source:
+
+| Step | Source | Albums recovered |
+|---|---|---|
+| 1 | `release_group_meta.first_release_date_year` | 1,657,405 |
+| 2 | `mb_album_country` earliest release date | 47,549 |
+| 3 | `mb_artist.begin_date_year` | 20,509 |
+| Unknown | Nothing found | **33,025** |
+
+### What the track-stats SQL has that era doesn't use
+
+`1-data/04-feature-track-stats-import.ipynb` runs a query
+(`mb_album_stats_duckdb.sql`) that computes a `first_release_year_imputed` column from
+**three signals that are completely orthogonal to the era fallback chain:**
+
+| Signal | What it is | How it differs from era sources |
+|---|---|---|
+| **sig0** | Any release in the release group that has a date | Era chain only looks at the canonical release; sig0 scans all releases in the group including non-canonical ones |
+| **sig1** | AR relationship `begin_date_year` | Relationship metadata — entirely independent of release event tables |
+| **sig2** | Linked peer release group's year | Infers year from a collaboratively linked release group |
+
+These three signals are independent paths into MusicBrainz that the era notebook never
+touches. For an album where the canonical release has no date, a non-canonical release in
+the same group or an AR link might still carry one.
+
+### Why these aren't in the era matrix yet
+
+The `first_release_year_imputed` column is **commented out** in the SQL query before
+the final table export:
+
+```sql
+-- ys.first_release_year_imputed,   ← commented out, not in parquet
+```
+
+So `sql_feature_album_track_stats.parquet` only contains `first_release_year` (the
+canonical release year), not the imputed version. The `10-feature-year.ipynb` notebook
+detects this at runtime and silently falls back to the raw column.
+
+### How to find out how much coverage is recoverable
+
+We don't know how many of the 33,025 Unknown-era albums have AR links or non-canonical
+releases with dates. The steps to find out:
+
+1. **Uncomment `first_release_year_imputed`** in `mb_album_stats_duckdb.sql`
+2. **Re-run `1-data/04-feature-track-stats-import.ipynb`** to re-export the parquet with the new column
+3. **Join to the Unknown-era set** in `07-feature-era.ipynb` or a new notebook:
+   ```python
+   unknown_ids = era_df[era_df['era_bin'] == 'Unknown']['album_id']
+   imputed = track_stats_df[['release_group_id', 'first_release_year_imputed']]
+   recovered = unknown_ids.merge(imputed, left_on='album_id', right_on='release_group_id')
+   recovered_count = recovered['first_release_year_imputed'].notna().sum()
+   ```
+4. **Inspect the recovered years** for plausibility before trusting them — sig1 (AR dates)
+   and sig2 (peer RG dates) are noisier than direct release dates
+
+### Should we add it as a fourth fallback in the era chain?
+
+**Yes, with caveats.** Adding `first_release_year_imputed` as a tier-4 fallback is
+low-risk because:
+- It only affects the 33,025 albums that are currently Unknown (all-zero rows)
+- Any year recovered is better than no year — Unknown albums currently contribute
+  nothing to cosine similarity
+- The signals are independent, so they don't corrupt the existing three tiers
+
+**Caveat:** sig2 (peer release group year) is the weakest signal — inferring an album's
+year from a linked peer RG could pull in years from a very different release context
+(e.g. a compilation that samples the album). Worth treating sig0 and sig1 as safe
+additions and evaluating sig2 separately.
+
+**Suggested approach:**
+- Add sig0 + sig1 as tier-4 fallback in the era chain (label source `rg_any_release`
+  and `ar_link` respectively in `best_year_source`)
+- Evaluate sig2 separately — only add it if the recovered years look plausible on inspection
+
+### Impact estimate
+
+Without running the query we can't know the exact number recovered. As a rough bound:
+albums with no canonical date, no country release date, and no artist begin year are
+genuinely sparse in MusicBrainz. Recovering even 50% of the 33,025 Unknown albums
+(~16,500) would reduce the Unknown rate from 2.1% to ~1.1%. Whether that's worth the
+query complexity depends on whether Unknown albums are disproportionately represented
+in a genre or era that users query — worth a quick check in the EDA notebook.
+
+---
+
 ## The overlap problem
 
 Era and year encode the same underlying signal — when was this album released — just
