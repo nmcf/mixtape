@@ -24,3 +24,6 @@ data/model_v3/
 
 # Ignore local AI environment artifacts
 .claude/
+__pycache__/
+*.pyc
+3-app/data/
