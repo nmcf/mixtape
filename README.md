@@ -81,10 +81,10 @@ mixtape/
 │   ├── 04-feature-ratings.ipynb             Build: Bayesian-weighted rating matrices
 │   ├── 05-feature-country.ipynb             Build: country feature matrix
 │   ├── 06-feature-track-stats.ipynb         Build: track stats feature matrix
-│   ├── 07-feature-era.ipynb                 Build: era feature parquet + sparse matrix
 │   ├── 08-feature-assembly.ipynb            Inspect: combined feature matrix
-│   ├── 09–12-feature-*.ipynb                Experimental: contributors, year, tag hierarchy, tag parents
+│   ├── 09–12-feature-*.ipynb                Experimental: contributors, tag hierarchy, tag parents
 │   ├── 13-feature-lastfm-popularity.ipynb   Build: Last.fm popularity sparse matrix
+│   ├── 14-feature-temporal.ipynb            Build: era parquet + era matrix + temporal matrix (era + year)
 │   └── feature_charts/                      Saved feature diagnostic plots + regen script
 ├── 4-model/
 │   ├── 01-knn-v1-training.ipynb             Train: v1 KNN model → data/model/

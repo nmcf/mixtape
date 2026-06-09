@@ -40,9 +40,10 @@ of production.
 | `album_record_label_matrix.npz` | 03-feature-label | ✅ | ✅ |
 | `album_track_stats_matrix.npz` | 06-feature-track-stats | ✅ | ✅ |
 | `album_country_matrix.npz` | 05-feature-country | ✅ | ✅ |
-| `album_era_matrix.npz` | 07-feature-era | ✅ | ✅ |
+| `album_era_matrix.npz` | 14-feature-temporal | ✅ | ❌ superseded by `album_temporal_matrix.npz` |
+| `album_temporal_matrix.npz` | 14-feature-temporal | ✅ | ✅ |
 | `album_lastfm_popularity_matrix.npz` | 13-feature-lastfm-popularity | ✅ (optional) | ✅ (optional) |
-| `album_year_matrix.npz` | 10-feature-year | ❌ pending review | ❌ |
+| `album_year_matrix.npz` | 10-feature-year | ❌ superseded by temporal matrix | ❌ |
 | `album_contributor_counts_matrix.npz` | 09-feature-contributors | ❌ pending review | ❌ |
 | `album_instrument_matrix.npz` | 09-feature-contributors | ❌ pending review | ❌ |
 | `album_role_family_matrix.npz` | 09-feature-contributors | ❌ pending review | ❌ |
@@ -53,7 +54,7 @@ of production.
 - `artist_ids.pkl` — artist row index
 - `album_era.parquet` — per-album year/era for audit
 - `album_tag_parent_columns.json` — tag hierarchy column map
-- `year_scaler.json` — year normalisation params
+- `temporal_year_scaler.json` — year normalisation params (formerly `year_scaler.json`)
 
 ---
 
@@ -67,7 +68,7 @@ of production.
 | record_label | `album_record_label_matrix.npz` | ✅ | 6 (weight 1.09) |
 | track_stats | `album_track_stats_matrix.npz` | ✅ | 6 (weight 1.09) |
 | country | `album_country_matrix.npz` | ✅ | 2 (weight 0.36) |
-| era | `album_era_matrix.npz` | ✅ | 4 (weight 0.73) |
+| era | `album_temporal_matrix.npz` | ✅ | 4 (weight 0.73) |
 | popularity | `album_lastfm_popularity_matrix.npz` | ✅ | 4 (weight 0.73) |
 | ratings | `album_ratings_matrix.npz` | ❌ hidden — syncs to popularity | — |
 
@@ -161,7 +162,7 @@ This is tracked in `Planning/merge-sql.md`.
 
 ## Remaining open questions
 
-- Should `album_year_matrix` complement or replace era binning? (continuous vs. one-hot)
+- `album_year_matrix` has been superseded by `album_temporal_matrix.npz` (era + year merged behind single Era dial, built by `14-feature-temporal.ipynb`). `YEAR_WEIGHT=0.3` set analytically — era-boundary smoothing only; formal tuning blocked (no `lastfm_album_similarity.parquet`). See `2-eda/04-EDA-year.ipynb` for the cosine analysis. ✅ Shipped.
 - Do contributor/instrument features improve recommendation quality enough to justify the
   extra query dimensions? Needs evaluation via `4-model/06-evaluate-lastfm.ipynb`.
 - Should tag parents improve coverage for niche albums, or blur genre distinctions? Needs A/B
