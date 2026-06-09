@@ -237,3 +237,160 @@ experimental matrices that don't exist in the main pipeline).
 - [ ] ERA dial loads temporal matrix (11 cols) without shape errors
 - [ ] README and REBUILDING.md entry point updated
 - [ ] `app_v3_weighted.py` and `app_v6.py` moved to `archive/`
+
+---
+
+## Follow-up: Restore the reactive artist search (v3_weighted → modular app)
+
+### What v3_weighted had (the good version)
+
+The archived `app_v3_weighted.py` used a **live typeahead** via the `streamlit-searchbox`
+package (`st_searchbox`). Suggestions appear and refine *as you type*, with no extra "submit"
+or selectbox-of-all-matches step. Three pieces made it work:
+
+```python
+from streamlit_searchbox import st_searchbox
+
+@st.cache_resource
+def artist_index(_lookup):
+    """Sorted unique artist names + precomputed lowercased column, so substring
+    matching across ~566k artists is fast per keystroke."""
+    names = pd.Series(sorted(_lookup['artist_name'].dropna().unique()))
+    return pd.DataFrame({'name': names, 'lower': names.str.lower()})
+
+def make_artist_search(lookup, limit=50):
+    idx = artist_index(lookup)
+    def _search(query):
+        q = (query or '').strip().lower()
+        if len(q) < 2:
+            return []
+        hits = idx[idx['lower'].str.contains(re.escape(q), na=False)]
+        if hits.empty:
+            return []
+        is_prefix = hits['lower'].str.startswith(q)
+        ordered = pd.concat([hits[is_prefix], hits[~is_prefix]])  # prefix hits first
+        return ordered['name'].head(limit).tolist()
+    return _search
+
+selected_artist = st_searchbox(make_artist_search(lookup),
+                               label="Set the Tone — Name an Artist",
+                               placeholder="Start typing an artist…",
+                               key="artist_search")
+```
+
+Key design properties:
+- **`artist_index()`** is cached once: a sorted unique-name Series with a precomputed
+  `lower` column so each keystroke does a vectorised `str.contains` over ~566k names
+  (no per-call `.unique()` / `.sort()`).
+- **`re.escape(q)`** so names with regex metacharacters (`+`, `(`, `*` — common in band
+  names) don't break the match.
+- **Prefix-first ordering**: exact prefix matches float to the top, substring matches follow.
+- **`len(q) < 2` guard**: no suggestions until 2+ chars, avoiding a 566k-row scan on the
+  first letter.
+- Picking a suggestion goes **straight to the album dropdown** — one interaction, not three.
+
+### What the new modular app currently has (the regression)
+
+`app.py` replaced the typeahead with a plain `st.text_input` + `st.selectbox`-of-matches,
+backed by `engine.search_artist()`:
+
+```python
+artist_query = st.text_input("Artist", placeholder="e.g. Radiohead, Eminem, Miles Davis…")
+if artist_query:
+    matches = search_artist(artist_query, lookup)          # substring over the FULL lookup
+    ...
+    selected_artist = st.selectbox("Pick the Artist", sorted(artists))
+    ...
+    selected_album_name = st.selectbox("Pick a Starting Album", ...)
+```
+
+Downsides vs v3_weighted:
+1. **Not reactive** — the user types, then must tab/enter to commit, *then* pick from a
+   second dropdown of all matching artists. Three interactions instead of one.
+2. **`search_artist()` scans the full lookup** (`lookup['artist_name'].str.contains`) on
+   every rerun — no cached lowercased index, no prefix ordering, no length guard.
+3. No `re.escape` — a query like `Sigur Rós (` or `+44` can raise a regex error.
+
+### Plan — port the reactive search into the modular structure
+
+**Dependency:** `streamlit-searchbox` is NOT currently installed or in `requirements.txt`
+(only the archived app imported it). Step 0 is to add it back.
+
+#### Step 0 — Dependency
+- Add `streamlit-searchbox` to `requirements.txt`.
+- `pip install streamlit-searchbox` in the active env.
+
+#### Step 1 — `engine.py`: add the cached index + search-callback factory
+Move `artist_index()` and `make_artist_search()` out of the archived app into `engine.py`
+(alongside the existing `search_artist`, which can stay as a fallback helper). Add
+`import re` at the top.
+
+```python
+@st.cache_resource
+def artist_index(_lookup):
+    names = pd.Series(sorted(_lookup['artist_name'].dropna().unique()))
+    return pd.DataFrame({'name': names, 'lower': names.str.lower()})
+
+def make_artist_search(lookup, limit=50):
+    idx = artist_index(lookup)
+    def _search(query):
+        q = (query or '').strip().lower()
+        if len(q) < 2:
+            return []
+        hits = idx[idx['lower'].str.contains(re.escape(q), na=False)]
+        if hits.empty:
+            return []
+        is_prefix = hits['lower'].str.startswith(q)
+        return pd.concat([hits[is_prefix], hits[~is_prefix]])['name'].head(limit).tolist()
+    return _search
+```
+
+#### Step 2 — `app.py`: swap the text_input + selectbox for `st_searchbox`
+In the **Find Similar** tab, replace the `artist_query` text_input / `search_artist` /
+`st.selectbox("Pick the Artist")` block with:
+
+```python
+from streamlit_searchbox import st_searchbox
+from engine import make_artist_search   # add to existing engine import
+
+selected_artist = st_searchbox(
+    make_artist_search(lookup),
+    label="Artist",
+    placeholder="Start typing an artist…",
+    key="artist_search",
+)
+if selected_artist:
+    artist_albums = lookup[lookup['artist_name'] == selected_artist]
+    album_options = {row['album_name']: aid
+                     for aid, row in artist_albums.iterrows()
+                     if is_queryable(aid)}
+    if not album_options:
+        st.info("No recommendable albums under current weights. Raise more channels.")
+    else:
+        selected_album_name = st.selectbox("Pick a Starting Album",
+                                            sorted(album_options.keys()))
+        if selected_album_name:
+            album_id = album_options[selected_album_name]
+            st.session_state['seed_album_id'] = album_id
+```
+
+Notes for the port:
+- Keep the existing **explore-seed branch** untouched — `st_searchbox` only replaces the
+  manual-search path (the `else:` branch of `if explore_seed:`).
+- `is_queryable()` already exists in `app.py` and works unchanged — it gates the album
+  dropdown to albums with signal under the current weights.
+- The downstream Album Card + recommendation rendering already keys off
+  `st.session_state['seed_album_id']`, so nothing below changes.
+
+#### Step 3 — Cleanup
+- `engine.search_artist()` can be **kept as a fallback** (cheap, no harm) or removed if
+  nothing else references it. Grep before deleting.
+- Confirm no other module imports `search_artist` from `engine`.
+
+#### Step 4 — Verify
+- [ ] `streamlit-searchbox` in `requirements.txt` and installed
+- [ ] Typing 2+ chars shows live suggestions, prefix matches first
+- [ ] Band names with regex metacharacters (`+44`, `!!!`, `Sigur Rós (`) don't error
+- [ ] Picking an artist immediately shows the album dropdown (single interaction)
+- [ ] Explore-seed flow still works and is visually distinct from the search flow
+- [ ] No full-lookup scan per keystroke (index is cached via `@st.cache_resource`)
