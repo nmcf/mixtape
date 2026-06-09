@@ -1,143 +1,204 @@
-# merge-streamlit — bringing app_features app changes into feature_merge
-
-## Context
-
-`feature_merge` already contains the full `cleanup` branch (merged via PR #23). The app changes
-to integrate come from commits made **on top of cleanup** that landed in `feature_merge` via the
-`app_features` branch. Specifically, `feature_merge` is ahead of `cleanup` on two app files:
-
-| File | Status |
-|------|--------|
-| `5-app/app_v3_weighted.py` | Modified — Last.fm popularity block + ratings/knob refactor |
-| `5-app/app_v6.py` | New file — experimental multi-version on-the-fly cosine app |
-
-The goal of this plan is to document what changed, verify the changes are stable, and confirm
-nothing needs reconciling before `feature_merge` is itself merged forward.
-
----
-
-## Changes in `app_v3_weighted.py`
-
-This is the **current production app** (`streamlit run 5-app/app_v3_weighted.py`). The diff from
-`cleanup` to `feature_merge` is ~47 lines across three logical groups:
-
-### 1. Last.fm popularity block added (conditional on file existence)
-
-```python
-_LASTFM_FILE      = os.path.join(FEATURES_DIR, 'album_lastfm_popularity_matrix.npz')
-_LASTFM_AVAILABLE = os.path.exists(_LASTFM_FILE)
-
-BLOCK_FILES = {
-    ...
-    **({'popularity': 'album_lastfm_popularity_matrix.npz'} if _LASTFM_AVAILABLE else {}),
-}
-```
-
-- The popularity block is **optional** — the app checks for the `.npz` at startup and gracefully
-  degrades if it's missing (sidebar info message + fixed ratings fallback weight).
-- Default dial: 4 (moderate — "noticeable but not dominant").
-- **What it does in cosine scoring:** adds a 4-column (album_listeners, album_scrobbles,
-  artist_listeners, artist_scrobbles) block to the weighted feature sum. Albums with no Last.fm
-  data get a zero row and are silently unaffected.
-
-### 2. Ratings knob removed; ratings weight synced to popularity dial
-
-Before: ratings had its own knob at dial 6.
-After: ratings is loaded as a feature block but **has no knob** — its weight is set in code to
-match the popularity dial value.
-
-```python
-KNOB_BLOCKS = {k: v for k, v in BLOCK_FILES.items() if k != 'ratings'}
-# ...
-if _LASTFM_AVAILABLE:
-    weights['ratings'] = weights['popularity']
-else:
-    weights['ratings'] = dial_to_weight(6)  # fixed fallback
-```
-
-**Why:** ratings and Last.fm popularity are complementary engagement signals — both measure how
-much the listening public has interacted with a release. Tying them to the same dial lets the user
-control "how much does popularity matter?" as a single concept without needing to balance two
-separate knobs that mostly move together anyway.
-
-**Consequence:** the knob panel now renders 5 knobs (genre, record label, track stats, country,
-era) + 1 popularity knob (6 total) rather than 6 fixed knobs. The `KNOB_BLOCKS` dict drives
-which knobs are shown; the `BLOCK_FILES` dict (which still includes ratings) drives which matrices
-are loaded and scored.
-
-### 3. Era matrix swapped from `album_era_matrix.npz` → `album_temporal_matrix.npz`
-
-```python
-'era': 'album_temporal_matrix.npz',   # was: 'album_era_matrix.npz'
-```
-
-The temporal matrix is the merged 11-column block (10 era one-hot + 1 continuous year) built by
-`3-features/14-feature-temporal.ipynb`. The era-only matrix (`album_era_matrix.npz`) is now
-superseded. The knob label stays "Era" — the user sees no change.
-
-### 4. Minor: `combined_ssq` loop still iterates `BLOCK_FILES` (not `KNOB_BLOCKS`)
-
-The loop that computes per-album query eligibility scores:
-```python
-for name in BLOCK_FILES:   # includes ratings
-```
-This is intentional — ratings contributes to the combined norm² even though it has no knob, so
-albums with only a ratings signal remain eligible in the dropdown.
-
----
-
-## Changes in `app_v6.py` (new file)
-
-An experimental app that supports **three model versions side-by-side** (V3, V4, V5) with
-on-the-fly weighted cosine scoring — no `.joblib` model files required.
-
-Key architectural differences from `app_v3_weighted.py`:
-
-| Aspect | `app_v3_weighted.py` | `app_v6.py` |
-|--------|----------------------|-------------|
-| Feature set | Genre + label + ratings + country + track stats + era + popularity | Tags + labels + types + ratings + country + track stats + role_family + instrument + contrib_cnt + year + tag_parent |
-| Weights | User-controlled dials | Loaded from `data/best_weights.json` |
-| Model versions | Single (v3) | V3 / V4 / V5 selectable |
-| Matrix files | New unified matrices (`album_genre_matrix.npz`, `album_temporal_matrix.npz`) | Older per-feature matrices (`album_tags_matrix.npz`, `album_year_matrix.npz`) |
-| UI | Knobs + faders | Experimental / incomplete |
-
-`app_v6.py` references several matrices that may not exist in `feature_merge`
-(`album_role_family_matrix.npz`, `album_instrument_matrix.npz`, `album_contributor_counts_matrix.npz`,
-`album_year_matrix.npz`, `album_tag_parent_matrix.npz`). These come from experimental feature
-notebooks (`09`, `11`, `12`) that are not yet integrated into the main pipeline. The file is
-present as a prototype and is **not the app that runs by default**.
-
----
-
-## Merge risk assessment
-
-| Change | Risk | Notes |
-|--------|------|-------|
-| Popularity block (conditional) | Low | Degrades gracefully if `.npz` missing; existing behaviour unchanged when absent |
-| Ratings knob → popularity sync | Low | Behaviour change is intentional and documented; no state-breaking |
-| Era matrix swap | Low | `album_temporal_matrix.npz` is committed and tested |
-| `app_v6.py` new file | Low | Not loaded by default; only relevant if matrices exist |
-| Merge conflict risk | None | `cleanup` is already the merge base of `feature_merge`; these changes are already in `feature_merge` |
-
----
+# merge-streamlit — reconciling app_v3_weighted.py with the new modular app (v7)
 
 ## Status
 
-**These changes are already in `feature_merge`** — they arrived via the `app_features` branch
-merge. This planning doc is a record of what changed and why, not a pre-merge checklist.
+`feature_merge` contains `app_v3_weighted.py` with the popularity block and temporal matrix
+updates from `app_features`. `cleanup` has now been reconciled with `origin/cleanup`, which
+introduced a **full modular refactor of the app** (v7) — splitting the monolithic
+`app_v3_weighted.py` into `config.py`, `engine.py`, `controls.py`, `style.py`, `app.py`.
 
-## What to verify before merging `feature_merge` forward (e.g. into `main`)
+The two apps currently coexist on `cleanup`. The goal of this doc is to compare them, identify
+what each does better, and define a merge plan for bringing the best of both into `feature_merge`.
 
-- [ ] `streamlit run 5-app/app_v3_weighted.py` starts cleanly with and without `album_lastfm_popularity_matrix.npz` present
-- [ ] Popularity knob appears when the `.npz` exists; info message appears when it doesn't
-- [ ] Era dial loads `album_temporal_matrix.npz` (11 columns) correctly — no shape errors
-- [ ] Ratings weight tracks popularity dial correctly (set popularity to 0 → ratings weight = 0)
-- [ ] `app_v6.py` is either removed, moved to `archive/`, or documented as requiring experimental matrices before `feature_merge` hits `main`
+---
 
-## Open question
+## What changed in `app_v3_weighted.py` (app_features additions)
 
-`app_v6.py` uses an older set of matrix files that diverge from the current pipeline
-(`album_tags_matrix.npz` vs `album_genre_matrix.npz`, `album_year_matrix.npz` vs
-`album_temporal_matrix.npz`). Decision needed: **archive it, update it to the new matrix names,
-or keep it as an explicit experimental prototype** with a README note. It should not be the
-default entry point.
+Three updates landed in `feature_merge` via `app_features` that are **not yet in the new modular
+app**:
+
+| Change | Detail |
+|--------|--------|
+| Last.fm popularity block | Conditional on `.npz` existence; graceful sidebar fallback if missing |
+| Ratings synced to popularity dial | Ratings has no knob — its weight tracks the Popularity dial |
+| Era matrix → temporal matrix | `album_era_matrix.npz` → `album_temporal_matrix.npz` (11 cols: era one-hot + continuous year) |
+
+---
+
+## What the new modular app (v7) adds
+
+The remote `cleanup` branch introduced `5-app/app.py` and supporting modules. Key additions vs
+`app_v3_weighted.py`:
+
+### Architecture
+The monolithic ~400-line file is split into four modules:
+
+| File | Role |
+|------|------|
+| `config.py` | All feature block definitions, weight levels, presets, explore settings |
+| `engine.py` | Recommendation logic, auto-tune, explore search, cosine scoring, per-block explanation |
+| `controls.py` | Sidebar rendering: presets, auto-tune, knobs, faders |
+| `style.py` | Light/dark theme CSS injection |
+
+This is a meaningful improvement — each module has a clear single responsibility and can be
+updated independently.
+
+### Explore tab
+A second tab — "Explore by Genre & Filters" — lets users discover albums by picking genre tags
+directly (up to 10), optionally narrowing by country and release year range. Results can be
+seeded directly into the Find Similar tab. This is new functionality not in `app_v3_weighted.py`.
+
+### Auto-tune
+A sidebar button that automatically sets feature weights based on the selected seed album's
+signal profile — boosting blocks where the album has strong signal, muting blocks where it has
+none. Not in `app_v3_weighted.py`.
+
+### Presets
+One-click weight profiles: "Full Mix", "Genre Purist", "Same Vibe / New Artist", "Local Sound",
+"Critics' Pick". Not in `app_v3_weighted.py`.
+
+### Theme toggle
+Light/dark mode toggle in the header. Custom `DM Serif Display` / `DM Sans` / `DM Mono`
+typography. Gold accent colour scheme (`#e8c84a`).
+
+### Per-block similarity explanation
+An expandable "Why these recommendations?" section showing top-3 contributing feature blocks
+per result. `app_v3_weighted.py` had a simpler flat summary line.
+
+### New fader component
+`5-app/fader_component/index.html` — a new SVG-based vertical fader built alongside the
+existing `knob_component`. The content filter faders (Live Albums / Greatest Hits) now use
+this dedicated component.
+
+---
+
+## Design decisions to question
+
+### 1. Off / Low / Medium / High weight levels vs numeric dials (0–11)
+
+The new `config.py` maps user choices to four fixed weights:
+
+```python
+WEIGHT_LEVELS = {'Off': 0.0, 'Low': 0.3, 'Medium': 1.0, 'High': 2.0}
+```
+
+`app_v3_weighted.py` uses a continuous 0–11 dial with:
+```python
+def dial_to_weight(d): return d / 11 * 2.0  # 0 → 0.0, 11 → 2.0
+```
+
+**The case against Off/Low/Medium/High:**
+- Four discrete levels is a blunt instrument. A user who wants genre "a bit above medium" has no
+  way to express that — they're forced to jump from 1.0 to 2.0, doubling the weight.
+- The knob UI (0–11) was deliberately chosen to match the guitar-amp aesthetic and give a
+  meaningful range. "11" as a concept (Spinal Tap) is part of the product personality. Replacing
+  it with a dropdown loses both the precision and the character.
+- The Low=0.3 value was not tuned — it is not the same as any of the training weights used in
+  the v3 model. The dial defaults in `app_v3_weighted.py` (genre:6, country:2, era:4) were
+  chosen to mirror the training weights. Discrete levels break that alignment.
+- The knob widget already snaps to visible positions and has reset-to-default behaviour — it
+  gives the same "quick preset feel" as Off/Low/Medium/High but with more resolution.
+
+**What the discrete levels do better:**
+- Simpler to understand for a first-time user — "High" is more intuitive than "dial 9".
+- Easier to implement presets (just a dict of level strings, not floats).
+- No ambiguity about what "3" vs "4" means.
+
+**Recommendation:** keep the 0–11 knob with named snap points as labels (so the UI shows
+"Medium" at 6, "High" at 9, etc.) rather than replacing numeric control with discrete levels.
+The presets system from v7 is worth keeping — implement them as dial-value dicts rather than
+level-string dicts.
+
+### 2. Era still points to `album_era_matrix.npz` (not temporal)
+
+`config.py` in the new modular app still loads the old era-only matrix:
+```python
+'era': 'album_era_matrix.npz',
+```
+This needs updating to `album_temporal_matrix.npz` before the new app is usable. The temporal
+matrix is what the pipeline now produces — the era-only matrix is superseded.
+
+### 3. Ratings has its own knob in the new app
+
+`config.py` gives ratings a full knob at `Medium` default. `app_v3_weighted.py` removed the
+ratings knob and synced ratings weight to the popularity dial. The new app has no popularity
+block at all yet.
+
+Decision needed: adopt the "ratings syncs to popularity" design from `app_v3_weighted.py`, or
+restore a separate ratings knob alongside a popularity one.
+
+**Recommendation:** keep the sync. It reduces cognitive load — popularity and ratings are both
+engagement signals and should feel like one dial to the user. The new app should add the
+popularity block and remove the standalone ratings knob as `app_v3_weighted.py` did.
+
+### 4. `app_v3_weighted.py` is still the entry point in README/REBUILDING
+
+The docs reference `streamlit run 5-app/app_v3_weighted.py`. If we merge the new modular app,
+the entry point becomes `streamlit run 5-app/app.py`. This needs updating in:
+- `README.md` (Quick start + layout section)
+- `REBUILDING.md` (Step 11)
+
+---
+
+## Feature comparison
+
+| Feature | `app_v3_weighted.py` | new `app.py` (v7) |
+|---------|----------------------|-------------------|
+| Find Similar tab | ✅ | ✅ |
+| Explore tab | ✗ | ✅ |
+| Auto-tune | ✗ | ✅ |
+| Presets | ✗ | ✅ |
+| 0–11 knob dials | ✅ | ✗ (Off/Low/Med/High) |
+| Popularity block | ✅ | ✗ (not yet added) |
+| Ratings synced to popularity | ✅ | ✗ (separate knob) |
+| Temporal matrix (era + year) | ✅ | ✗ (era-only matrix) |
+| Light/dark theme | ✗ | ✅ |
+| Per-block explanation | Basic (caption line) | ✅ (expandable, per-result) |
+| Modular code structure | ✗ (monolith) | ✅ |
+| fader_component | ✅ | ✅ (new version) |
+| Streamlit config.toml | ✗ | ✅ |
+
+---
+
+## Merge plan
+
+The new modular structure is strictly better for maintainability. The goal is to bring
+`feature_merge`'s feature additions into the modular app, not the other way around.
+
+### Step 1 — Merge cleanup into feature_merge
+Bring the modular app files (`app.py`, `config.py`, `engine.py`, `controls.py`, `style.py`,
+`fader_component/`, `.streamlit/`) across.
+
+### Step 2 — Update config.py
+- Swap `album_era_matrix.npz` → `album_temporal_matrix.npz`
+- Add popularity block (conditional on file existence, matching `app_v3_weighted.py` pattern)
+- Remove ratings from `BLOCK_FILES` knob set; keep it loaded but weight-synced to popularity
+
+### Step 3 — Restore 0–11 knob dials
+Replace `LEVEL_OPTIONS / WEIGHT_LEVELS / DEFAULT_LEVELS` with numeric dial defaults
+(matching the training weights). Update `controls.py` to pass dial integers, not level strings.
+Presets should be dicts of dial values (0–11), not level strings.
+
+### Step 4 — Update docs
+- `README.md`: entry point → `streamlit run 5-app/app.py`
+- `REBUILDING.md` Step 11: same
+- `docs/05-app.md`: document Explore tab, auto-tune, presets, theme toggle
+
+### Step 5 — Archive or remove `app_v3_weighted.py`
+Once the modular app is verified working with all feature blocks, move
+`app_v3_weighted.py` to `archive/`. `app_v6.py` should go there too (it references
+experimental matrices that don't exist in the main pipeline).
+
+---
+
+## Checklist before merging to main
+
+- [ ] `config.py` updated: temporal matrix, popularity block, no standalone ratings knob
+- [ ] 0–11 dials restored in `controls.py` (not Off/Low/Med/High)
+- [ ] Presets converted from level-strings to dial-value dicts
+- [ ] `streamlit run 5-app/app.py` runs cleanly — both tabs functional
+- [ ] Popularity knob appears when `.npz` present; graceful fallback when absent
+- [ ] Auto-tune and presets work correctly with updated weight system
+- [ ] ERA dial loads temporal matrix (11 cols) without shape errors
+- [ ] README and REBUILDING.md entry point updated
+- [ ] `app_v3_weighted.py` and `app_v6.py` moved to `archive/`
