@@ -2,7 +2,7 @@
 
 **Notebooks:** `3-features/01-album-artist-index` (shared row index), `02-feature-genre`,
 `03-feature-label`, `04-feature-ratings` (v1 features), `05-feature-country`, `06-feature-track-stats`, `13-feature-lastfm-popularity` (popularity block), `14-feature-temporal` (era + year → temporal matrix, in app), `20-feature-assembly` (assembly overview for all v3 blocks).
-Exploratory analysis of the tag/label features is in `2-eda/05-EDA-tags-labels.ipynb`.
+Exploratory analysis notebooks: `2-eda/05-EDA-tags-labels.ipynb` (tag/label coverage + genre blend), `2-eda/06-EDA-track-stats.ipynb` (track length, count, year coverage + feature correlations).
 
 > `07-feature-era.ipynb` and `10-feature-year.ipynb` have been consolidated into `14-feature-temporal.ipynb` and moved to `archive/`. Run `14-feature-temporal.ipynb` to rebuild all temporal outputs.
 
@@ -125,6 +125,8 @@ Areas that are not countries themselves are walked up the MusicBrainz area conta
 Built by `3-features/06-feature-track-stats.ipynb` from `sql_feature_album_track_stats.parquet`. 12 columns per album:
 
 `first_release_year`, `medium_count`, `track_count`, `total_length_ms`, `mean_length_ms`, `median_length_ms`, `stddev_length_ms`, `min_length_ms`, `max_length_ms`, `p25_length_ms`, `p75_length_ms`, `iqr_length_ms`
+
+See `2-eda/06-EDA-track-stats.ipynb` for full distribution analysis, outlier regimes (short interludes, long ambient releases), year imputation coverage, and Spearman correlation heatmap confirming which columns are redundant.
 
 Four columns from the raw parquet are **excluded**: `pct_tracks_with_length` and `track_count_with_length` (data-quality flags, not musical features), and `variance_length_ms` and `range_length_ms` (redundant — `stddev` and `iqr` already capture spread). Each retained column is min-max scaled to [0, 1]; nulls are filled with column medians before scaling.
 
