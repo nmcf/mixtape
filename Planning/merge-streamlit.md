@@ -74,40 +74,69 @@ this dedicated component.
 
 ## Design decisions to question
 
-### 1. Off / Low / Medium / High weight levels vs numeric dials (0–11)
+### 1. Off / Low / Medium / High weight levels — replaced with direct numeric weights
+
+**Decision: drop discrete levels entirely. Use direct float weights, displayed via the 0–11 knob.**
 
 The new `config.py` maps user choices to four fixed weights:
-
 ```python
 WEIGHT_LEVELS = {'Off': 0.0, 'Low': 0.3, 'Medium': 1.0, 'High': 2.0}
 ```
+This is being removed. Weights will be stored and applied as direct floats (e.g. `0.4`, `1.09`,
+`2.0`) with no intermediate level abstraction.
 
-`app_v3_weighted.py` uses a continuous 0–11 dial with:
+**Why direct weights are better:**
+- Presets loaded from training results (e.g. best-tuned weights from `best_weights.json`) will
+  have values like `0.4`, `1.37`, `0.18` that do not map cleanly onto four fixed levels. Forcing
+  them through a level lookup loses precision and breaks the link between what the model was
+  trained on and what the app applies.
+- Four levels is too coarse. The difference between Low=0.3 and Medium=1.0 is a 3× jump with
+  no intermediate — a user or preset that wants `0.6` has nowhere to go.
+- The knob UI (0–11) was deliberately chosen for the guitar-amp aesthetic and product
+  personality. Replacing it with a dropdown label loses both.
+
+**Knob ↔ weight mapping:**
+
+The 0–11 dial maps linearly to `[0.0, 2.0]`:
 ```python
-def dial_to_weight(d): return d / 11 * 2.0  # 0 → 0.0, 11 → 2.0
+def dial_to_weight(d: int) -> float:
+    return d / 11 * 2.0   # 0 → 0.0,  6 → ~1.09,  11 → 2.0
 ```
 
-**The case against Off/Low/Medium/High:**
-- Four discrete levels is a blunt instrument. A user who wants genre "a bit above medium" has no
-  way to express that — they're forced to jump from 1.0 to 2.0, doubling the weight.
-- The knob UI (0–11) was deliberately chosen to match the guitar-amp aesthetic and give a
-  meaningful range. "11" as a concept (Spinal Tap) is part of the product personality. Replacing
-  it with a dropdown loses both the precision and the character.
-- The Low=0.3 value was not tuned — it is not the same as any of the training weights used in
-  the v3 model. The dial defaults in `app_v3_weighted.py` (genre:6, country:2, era:4) were
-  chosen to mirror the training weights. Discrete levels break that alignment.
-- The knob widget already snaps to visible positions and has reset-to-default behaviour — it
-  gives the same "quick preset feel" as Off/Low/Medium/High but with more resolution.
+Presets store **exact float weights**, not dial positions. When a preset is applied, the dial
+is set to the nearest integer position:
+```python
+def weight_to_dial(w: float) -> int:
+    return round(w / 2.0 * 11)   # clamp to [0, 11]
+```
 
-**What the discrete levels do better:**
-- Simpler to understand for a first-time user — "High" is more intuitive than "dial 9".
-- Easier to implement presets (just a dict of level strings, not floats).
-- No ambiguity about what "3" vs "4" means.
+This means the knob visually snaps to the closest position (e.g. weight `0.4` → dial `2`,
+weight `1.37` → dial `8`) while the **backend uses the exact preset float for scoring**.
+The slight rounding only affects the display — the cosine calculation always uses the
+original precision value from the preset definition.
 
-**Recommendation:** keep the 0–11 knob with named snap points as labels (so the UI shows
-"Medium" at 6, "High" at 9, etc.) rather than replacing numeric control with discrete levels.
-The presets system from v7 is worth keeping — implement them as dial-value dicts rather than
-level-string dicts.
+```python
+# In config.py
+PRESETS = {
+    'Full Mix': {
+        'genre': 1.09, 'record_label': 1.09, 'country': 0.36,
+        'track_stats': 1.09, 'era': 0.73, 'popularity': 0.73,
+    },
+    'Genre Purist': {
+        'genre': 2.0, 'record_label': 0.0, 'country': 0.0,
+        'track_stats': 0.0, 'era': 0.0, 'popularity': 0.0,
+    },
+    # ...
+}
+
+# In controls.py — when applying a preset, set dial display only
+def preset_dial(weight: float) -> int:
+    return max(0, min(11, round(weight / 2.0 * 11)))
+```
+
+The session state holds two parallel values per block: the **exact weight** (float, used for
+scoring) and the **dial position** (int, used for display). The knob component reads the dial
+int; the engine reads the float.
 
 ### 2. Era still points to `album_era_matrix.npz` (not temporal)
 
@@ -174,10 +203,15 @@ Bring the modular app files (`app.py`, `config.py`, `engine.py`, `controls.py`, 
 - Add popularity block (conditional on file existence, matching `app_v3_weighted.py` pattern)
 - Remove ratings from `BLOCK_FILES` knob set; keep it loaded but weight-synced to popularity
 
-### Step 3 — Restore 0–11 knob dials
-Replace `LEVEL_OPTIONS / WEIGHT_LEVELS / DEFAULT_LEVELS` with numeric dial defaults
-(matching the training weights). Update `controls.py` to pass dial integers, not level strings.
-Presets should be dicts of dial values (0–11), not level strings.
+### Step 3 — Replace discrete levels with direct float weights + dial display
+- Remove `LEVEL_OPTIONS`, `WEIGHT_LEVELS`, `DEFAULT_LEVELS` from `config.py`
+- `PRESETS` becomes a dict of `{block: float_weight}` — exact values, not level strings
+- Add `dial_to_weight(d)` and `weight_to_dial(w)` helpers (linear mapping over `[0, 2.0]`)
+- Session state stores two values per block: `wgt_{name}` (float, used by engine) and
+  `dial_{name}` (int 0–11, used by knob display)
+- When a preset is applied, exact weights go into `wgt_*` and rounded dial positions go into
+  `dial_*` — the knob snaps to nearest integer but scoring uses the full precision float
+- Default dials mirror the v3 training weights (genre: ~1.09 → dial 6, country: ~0.36 → dial 2, etc.)
 
 ### Step 4 — Update docs
 - `README.md`: entry point → `streamlit run 5-app/app.py`
@@ -194,8 +228,9 @@ experimental matrices that don't exist in the main pipeline).
 ## Checklist before merging to main
 
 - [ ] `config.py` updated: temporal matrix, popularity block, no standalone ratings knob
-- [ ] 0–11 dials restored in `controls.py` (not Off/Low/Med/High)
-- [ ] Presets converted from level-strings to dial-value dicts
+- [ ] Discrete levels removed; `config.py` presets use direct float weights
+- [ ] `dial_to_weight` / `weight_to_dial` helpers in place; session state holds both `wgt_*` and `dial_*` per block
+- [ ] Knob displays rounded dial position; engine scores with exact float — verified they differ for at least one preset value (e.g. `0.4` → dial `2` → display only)
 - [ ] `streamlit run 5-app/app.py` runs cleanly — both tabs functional
 - [ ] Popularity knob appears when `.npz` present; graceful fallback when absent
 - [ ] Auto-tune and presets work correctly with updated weight system
