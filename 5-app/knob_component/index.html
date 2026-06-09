@@ -223,7 +223,8 @@ window.addEventListener('message', function(e) {
       lastNonce = args.reset_nonce;
       initialised = true;
     } else if (args.reset_nonce !== lastNonce) {
-      applyDefs(defs, true);      // deliberate "Reset Defaults" — snap to defaults
+      applyDefs(defs, false);     // nonce changed (reset OR auto-tune) — adopt the
+                                  // value Python sent, which already reflects the action
       lastNonce = args.reset_nonce;
       sendValues();               // re-emit so Python's `result` reflects the reset
     }

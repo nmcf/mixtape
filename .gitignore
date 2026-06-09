@@ -30,3 +30,5 @@ data/features/album_types_matrix.npz
 # Ignore local AI environment artifacts
 .claude/
 data/model*/*.joblib
+__pycache__/
+*.pyc

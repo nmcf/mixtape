@@ -1,36 +1,33 @@
 # Streamlit App
 
-**Files:** `5-app/app.py` (v1), `5-app/app_v2.py` (v1 vs v2), `5-app/app_v3.py` (v1 vs v2 vs v3), `5-app/app_v3_weighted.py` (v3 with weight knobs + filters — **current**), `5-app/app_v6.py` (experimental on-the-fly cosine with v3/v4 features)
+**Entry point:** `5-app/app.py`
 
-`app_v3_weighted.py` is the current active app.
+**Architecture:** modular — `config.py`, `engine.py`, `controls.py`, `style.py`, `app.py`
+
+Older monolithic app files (`app_v3_weighted.py`, `app_v6.py`) have been archived to `5-app/archive/`.
 
 ## Running the app
 
 ```bash
 source env/bin/activate
-streamlit run 5-app/app_v3_weighted.py
+streamlit run 5-app/app.py
 ```
 
 The app opens at `http://localhost:8501` by default.
 
-## App versions
+## Module overview
 
-| File | What it does | Loads |
-|------|-------------|-------|
-| `app.py` | v1 only, single model | `data/model/` joblib |
-| `app_v2.py` | v1 vs v2 side-by-side | `data/model/`, `data/model_v2/` joblibs |
-| `app_v3.py` | v1 vs v2 vs v3 side-by-side | all three joblibs |
-| `app_v3_weighted.py` | **v3 features with runtime weight knobs + album filters (current)** | raw feature matrices + flag parquets — no trained model |
-| `app_v6.py` | experimental — on-the-fly cosine with v3/v4 features | raw feature matrices |
+| File | Role |
+|------|------|
+| `config.py` | All constants, BLOCK_FILES, KNOB_BLOCKS, PRESETS, DEFAULT_WEIGHTS, `dial_to_weight`, `weight_to_dial` |
+| `engine.py` | Data loading (cached), weighted cosine, auto-tune profiling, Explore search |
+| `controls.py` | Sidebar UI — preset dropdown, knob panel, auto-tune buttons, content filter faders |
+| `style.py` | Theme (light/dark) and CSS injection |
+| `app.py` | Page config, header, tab layout, result rendering |
 
-The comparison apps (`app_v2.py`, `app_v3.py`) load trained `.joblib` models, which are **not
-committed** (gitignored) — retrain via the v2/v3 notebooks to use them. The current weighted app
-needs only the committed feature matrices.
+## How the app works
 
-## Weighted app — `app_v3_weighted.py`
-
-Instead of a pre-fitted KNN model, this app loads raw feature blocks (genre, record_label,
-ratings, country, track_stats, era, and optionally popularity) and precomputes each block's per-album sum-of-squares once at startup. Sidebar **knobs** set a weight per block; per query it computes weighted cosine directly:
+Instead of a pre-fitted KNN model, the app loads raw sparse feature matrices and computes weighted cosine similarity at query time:
 
 ```
 numerator   = Σ_b w_b² · (X_b · q_b)
@@ -38,136 +35,104 @@ album norms = sqrt(Σ_b w_b² · ssq_b)
 cosine      = numerator / (album_norms · query_norm)
 ```
 
-No full-matrix rebuild or renormalisation per query (~60–180 ms over the 1.76M-album index).
-The album dropdown is filtered to albums that have signal under the *current* weights, so it
-never offers an album that would return no recommendations.
+~60–180 ms over the ~1.76M-album index. No full-matrix rebuild or renormalisation per query.
+
+## Weight system — float weights + dial display
+
+Weights are stored as **exact floats** (0.0–2.0). The guitar-amp dial (0–11) is a display-only
+representation derived by rounding. This means:
+
+- **Presets** store exact float weights (e.g. `genre: 1.09`) that mirror the v3 training weights.
+- **Dial display** is computed on-the-fly: `weight_to_dial(w) = round(w / 2.0 * 11)`.
+- **Scoring** always uses the exact float, not the rounded dial value.
+- When a user turns a knob, the exact weight is computed: `dial_to_weight(d) = round(d/11 * 2.0, 4)`.
+
+Session state holds two values per block: `wgt_{name}` (float, used by engine) and `dial_{name}`
+(int 0–11, used by knob display). When a preset is applied, exact weights go into `wgt_*` and
+rounded dial positions go into `dial_*` — the knob snaps to nearest integer but scoring uses
+full-precision floats.
 
 ### Feature knobs
 
-The sidebar header reads **"Tune your sound"**. Each feature block is a guitar-amp-style rotary
-knob (custom component, `5-app/knob_component/index.html`) reading **0–11**, mapped to a block
-weight by `dial_to_weight(d) = d/11·2.0` (0 → off, 11 → 2.0 max). Click a tick around the ring to
-set a value. Defaults (dial units): Country = 2, Era = 4, Popularity = 4 (both moderate — soft signals), and the
-rest = 6 (mirroring the v3 training weights); a "Preset" button restores them via an `on_click`
-callback. The active weights are echoed under the results as an **"EQ — …"** caption.
+The sidebar has one rotary knob per visible block: Genre, Record Label, Country, Track Stats, Era,
+and optionally Popularity (if `album_lastfm_popularity_matrix.npz` exists). The knob reads 0–11.
 
-The app always shows **5 knobs** — Genre, Record Label, Track Stats, Country, Era — plus a 6th **Popularity** knob that appears automatically when `data/features/album_lastfm_popularity_matrix.npz` exists. If the file is missing an info message is shown and the app falls back gracefully.
+**Ratings has no knob.** Ratings weight auto-syncs to the Popularity dial — both are engagement
+signals. When popularity is unavailable, ratings defaults to `dial_to_weight(6) ≈ 1.09`.
 
-**Ratings has no knob.** The ratings block is always loaded but its weight is not user-controllable. Instead it **auto-syncs to the Popularity dial** — turning up Popularity boosts both Last.fm listener/scrobble signal and community ratings together, treating them as complementary engagement measures. When the popularity file is missing, ratings defaults to a fixed weight of dial 6 (≈ 1.09).
+### Presets
 
-Results render as a three-column table — **Album · Artist · Match** — where Match is the weighted
-cosine shown as a right-aligned percentage to one decimal (`st.column_config.NumberColumn`,
-`format='%.1f%%'`, pinned narrow via an integer pixel `width`).
+One-click weight profiles stored as exact floats in `PRESETS` in `config.py`:
 
-### Album filters
+| Preset | Description |
+|--------|-------------|
+| Full Mix | Balanced blend of all features — the default starting point |
+| Genre Purist | Match by musical style only |
+| Same Vibe, New Artist | Similar sound + era, different artists |
+| Local Sound | Prioritise country-of-origin match |
+| Critics' Pick | Favour popularity / critical reception |
 
-Two mixing-console-style **vertical faders** below the knobs (custom component,
-`5-app/knob_component/switch.html`, placed side by side with `st.columns(2)`) filter results by
-MusicBrainz release-group **secondary type** — an exact schema lookup, not an album-name guess.
-Each fader has three detents with the option labels at top / middle / bottom; click a label or
-anywhere along the track to slide the cap.
+### Auto-Tune
+
+Clicking **✦ Auto-Tune** calls `auto_tune_profile()` (per-block cosine signal strength profiling on
+the seed album, normalised 0–1), then `smart_auto_tune()` which combines signal strength with the
+user's current float weights and returns a new float weight dict. Weights are applied via the same
+`_apply_weights()` path as presets — exact floats into `wgt_*`, rounded dials into `dial_*`.
+
+## Tabs
+
+### Find Similar
+
+1. Type an artist name → artist dropdown → album dropdown (filtered to albums with signal under current weights).
+2. Recommendations rendered as a styled three-column table: `#` · Album/Artist · Similarity score + bar.
+3. Expandable **"Why these recommendations?"** section shows per-block cosine breakdown for each result.
+
+The active weight mix is echoed in the subtitle as `MIX › Genre 1.09  ·  Era 0.73  ·  …`.
+
+### Explore
+
+Discover albums by genre tag rather than by artist. Controls:
+
+- **Genre/tag multiselect** — top 100 tags by MusicBrainz ref_count.
+- **Country filter** — top 40 countries by album count.
+- **Year range slider** — 1920–2026.
+
+Scoring: `relevance = matched_tag_count / total_album_tag_count` — prevents mega-popular
+"tagged with everything" albums from dominating. At most 2 albums per artist shown.
+
+Clicking a result seeds it into the Find Similar tab for cosine recommendations.
+
+## Content filters
+
+Two mixing-console-style **vertical faders** (custom component, `5-app/fader_component/`) below
+the knobs filter results by MusicBrainz release-group **secondary type**.
 
 | Fader | Options | Keeps |
 |-------|---------|-------|
-| **Live Albums** | Live · Both · Studio | Live = secondary type Live (6); Studio = everything else |
-| **Greatest Hits** | Hits · Both · Albums | Hits = secondary type Compilation (1); Albums = everything else |
+| **Live Albums** | STUDIO / BOTH / LIVE | STUDIO = exclude live releases; LIVE = live only |
+| **Greatest Hits** | ALBUMS / BOTH / HITS | ALBUMS = exclude compilations; HITS = compilations only |
 
-Both default to **Both** and chain on both the artist-album dropdown and the recommendation
-results, via the generic `filter_by_flag()` helper. The flags are pre-exported to
-`data/mb_album_live_flag.parquet` and `data/mb_album_compilation_flag.parquet` (single `album_id`
-column each) by the matching `1-data/queries/*_flag_duckdb.sql`, then loaded into sets by
-`load_flag_ids()`. This replaced an earlier album-name keyword heuristic that mis-classified
-titles with no "live" keyword (e.g. "Set List", date-format concert titles).
-
-### Custom widget plumbing & state model
-
-Both the knob panel and the fader switches are custom HTML/SVG components served from a small
-background `HTTPServer` thread on port 8502 and registered with `declare_component(url=...)`
-(Streamlit's built-in component file server failed in this environment). All outbound messages to
-Streamlit must include `isStreamlitMessage: true`.
-
-Each widget is the **single source of truth** for its own value — there is no `session_state`
-mirror, so the knobs and the two faders move fully independently. Streamlit persists a keyed
-component's last emitted value; the knob panel is re-seeded from that persisted value each rerun so
-a silent iframe remount restores the user's dials rather than snapping to defaults. After first
-render every iframe **ignores ordinary inbound renders** — only a change to the knob panel's
-`reset_nonce` arg (flipped by the "Preset" button) makes it re-apply (using each knob's
-`defaultValue`) and re-emit so the Python side stays in sync. The faders have no external reset, so
-they ignore all inbound renders after init. This event-based scheme replaced an earlier 600 ms
-time-window guard that caused cross-widget glitches and a stale-value "memory" bug.
-
-**Various-Artists releases are excluded from recommendations.** ~1.5% of the index (VA samplers
-and compilations that slipped past the import filter via the studio branch) have a null
-`artist_name`; `recommend()` skips them, since a release with no single artist isn't actionable
-here. Seeds are unaffected — the album dropdown is always built from a selected real artist.
-
-## User flow
-
-```mermaid
-flowchart TD
-    A[User types in the artist searchbox] --> D[Live dropdown: matching artists from the lookup, refines per keystroke]
-    D --> E{Recommendable albums exist?}
-    E -- No --> F[Show info message]
-    E -- Yes --> G[Dropdown: select album]
-    G --> H[Weighted-cosine query over the v3 blocks]
-    H --> I[Display Album · Artist · Match% table]
-```
-
-In `app_v3_weighted.py` the artist step is a `streamlit-searchbox` typeahead (`st_searchbox`):
-matches from the lookup appear and refine as you type. `artist_index()` caches the ~566k unique
-names with a lowercased column for fast per-keystroke substring matching; `make_artist_search()`
-returns the callback (150 ms debounce, prefix hits first, capped at 50). Picking a suggestion goes
-straight to the album dropdown — it replaced the old text input + separate artist selectbox.
+Both default to the exclude-unwanted position (STUDIO / ALBUMS).
 
 ## Data loaded at startup
 
-All resources are cached with `@st.cache_resource` and load once per server process:
+All resources cached with `@st.cache_resource`:
 
 | Resource | Source | Purpose |
 |----------|--------|---------|
 | genre matrix | `data/features/album_genre_matrix.npz` | Genre feature block |
 | record_label matrix | `data/features/album_record_label_matrix.npz` | Label feature block |
-| ratings matrix | `data/features/album_ratings_matrix.npz` | Ratings feature block |
+| ratings matrix | `data/features/album_ratings_matrix.npz` | Ratings (synced to popularity) |
 | country matrix | `data/features/album_country_matrix.npz` | Country feature block |
 | track_stats matrix | `data/features/album_track_stats_matrix.npz` | Track stats feature block |
-| era matrix | `data/features/album_era_matrix.npz` | Era feature block |
-| popularity matrix | `data/features/album_lastfm_popularity_matrix.npz` | Popularity feature block (optional — loaded if present) |
+| era matrix | `data/features/album_temporal_matrix.npz` | 11-col: 10 era one-hot bins + continuous year |
+| popularity matrix | `data/features/album_lastfm_popularity_matrix.npz` | Optional — Last.fm data |
 | album index | `data/features/album_ids.pkl` | Master row index |
-| lookup table | `data/mb_album_artists.parquet` | Maps album IDs to names and artist names |
-| live flag | `data/mb_album_live_flag.parquet` | Live Albums fader filter |
-| compilation flag | `data/mb_album_compilation_flag.parquet` | Greatest Hits fader filter |
+| lookup table | `data/mb_album_artists.parquet` | album_id → name + artist_name |
+| secondary types | `data/mb_album_secondary_type.parquet` | Live / compilation flags |
 
-## Highlight logic (`app_v3.py`)
+## Theme
 
-Rows are highlighted amber when an album appears in **only that model's** results and not in either of the other two. Plain rows appear in at least one other model.
-
-```python
-def highlight_unique(df, other_ids):
-    return [
-        'background-color: #fff3cd; ...' if aid not in other_ids else ''
-        for aid in df['album_id']
-    ]
-```
-
-The summary line below the tables shows how many albums appear in all three, and the unique count per model.
-
-## Key functions
-
-### `make_artist_search(lookup, limit=50)` / `artist_index(lookup)`
-Build the `st_searchbox` callback for the artist typeahead. `artist_index()` caches the unique
-artist names with a precomputed lowercased column; the callback does a case-insensitive substring
-match, orders prefix hits first, and caps the suggestion list at `limit`.
-
-### `search_artist(name, lookup)`
-Case-insensitive partial string match on `artist_name`, returning all matching rows. Retained as a
-helper (the comparison apps still use it); the current app's artist field uses the typeahead above.
-
-### `recommend(album_id, n, model, X_knn_norm, album_ids_annotated, album_id_to_row, lookup)`
-Runs a KNN query for the given album across one model, fetches `n * 5` candidates, then:
-- Removes the seed album itself
-- Removes other albums by the same primary artist
-
-Returns a DataFrame with `Album`, `Artist`, and `album_id` columns, truncated to `n` rows. Returns `None` if the album has no features in this model.
-
-### `render_model_col(label, recs, other_ids)`
-Renders one column: applies the highlight style and calls `st.dataframe`. Shared across all three columns to keep rendering DRY.
+Light/dark toggle in the top-right corner. `style.py` generates a CSS variable set and injects it
+via `st.markdown`. All custom HTML/SVG components reference the same CSS variables for consistent
+theming across native Streamlit widgets and custom components.

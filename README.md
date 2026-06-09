@@ -45,12 +45,12 @@ pip install -r requirements.txt
 ### 4. Run the app
 
 ```bash
-streamlit run 5-app/app_v3_weighted.py
+streamlit run 5-app/app.py
 ```
 
 The app opens at **http://localhost:8501**. Start typing an artist in the live search box to pick one, choose a starting album, and get recommendations from the v3 feature set. You can reweight features (genre, record label, country, track stats, era, and Last.fm popularity) in real time using guitar-amp-style **knobs** (0–11) in the sidebar. Ratings weight auto-syncs to the Popularity dial. Two mixing-console-style **vertical faders** — **Live Albums** (Live/Both/Studio) and **Greatest Hits** (Hits/Both/Albums) — narrow results by MusicBrainz release type.
 
-No database connection is needed — the Parquet files and feature matrices in `data/` are all that's required. (The trained `.joblib` models used by the older comparison apps `app_v2.py`/`app_v3.py` are not committed; retrain them with the v2/v3 notebooks if you want those apps.)
+No database connection is needed — the Parquet files and feature matrices in `data/` are all that's required. (The trained `.joblib` models used by the older comparison apps are not committed; retrain them with the v2/v3 notebooks if you want those apps. Older monolithic app files are archived in `5-app/archive/`.)
 
 ## Re-building from scratch
 
