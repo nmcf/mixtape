@@ -73,7 +73,8 @@ mixtape/
 │   ├── 01-EDA-albums.ipynb                  Exploratory analysis: albums + key design decisions
 │   ├── 02-EDA-artists.ipynb                 Exploratory analysis: artists + key design decisions
 │   ├── 04-EDA-year.ipynb                    Exploratory analysis: year/era sources and coverage
-│   └── 05-EDA-tags-labels.ipynb             Exploratory analysis: tag/label coverage + genre blend
+│   ├── 05-EDA-tags-labels.ipynb             Exploratory analysis: tag/label coverage + genre blend
+│   └── 06-EDA-track-stats.ipynb             Exploratory analysis: track length, count, year + feature correlations
 ├── 3-features/
 │   ├── 01-album-artist-index.ipynb          Build: master album/artist ID index (run first)
 │   ├── 02-feature-genre.ipynb               Build: album, artist, and blended genre tag matrices
