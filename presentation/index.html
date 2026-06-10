@@ -347,7 +347,7 @@
       </div>
 
       <div class="meta-row">
-        <div class="counter" id="counter">01:11</div>
+        <div class="counter" id="counter">01:10</div>
         <div class="progress"><span id="progressBar"></span></div>
         <div class="counter" id="timer">00:00</div>
       </div>
@@ -365,10 +365,9 @@
 
   const slides = [
     { presenter: "NIALL",   title: "Mixtape",               body: "<p style='font-size:17px;font-style:italic;color:#5a4a30;margin-bottom:10px;'>Tune the algorithm to your perfect sound.</p>An album recommendation engine that blends MusicBrainz metadata, Last.fm listening data, and similarity models to surface albums you'll love." },
-    { presenter: "NIALL",   title: "MusicBrainz",           logo: "musicbrainz-logo.svg", body: "<ul><li>Open-source encyclopedia of music metadata.</li><li>Hosted the full MusicBrainz database in Postgres.</li><li>Exported the parts we need to Parquet tables.</li><li>Key tables: artists, albums, tags &amp; ratings.</li></ul>" },
-    { presenter: "NIALL",   title: "Claude &amp; SchemaSpy",    body: "<ul><li>Ran SchemaSpy to map the whole DB into the repo.</li><li>Pointed Claude at the diagram &mdash; instant schema answers.</li><li>Found MB's precomputed tables &mdash; skipped costly joins.</li><li>Pulled artists, albums, tags, labels, areas &amp; countries.</li></ul>" },
-    { presenter: "NIALL",   title: "Genre Feature",         body: "<ul><li>Blended 3 tag sources: album, artist &amp; label.</li><li>Weighted tiers &mdash; album <code>1.0</code>, artist <code>0.5</code>, label <code>0.3</code>.</li><li>Label tags reinforce existing signal &amp; rescue untagged albums.</li><li>Rolled ~2.7k subgenres up to ~20 parent families.</li></ul>" },
-    { presenter: "NIALL",   title: "Tag Insights",          body: "<ul><li>Sparse, power-law tags &mdash; a few cover most (albums ~46%, artists ~9%).</li><li>No formal taxonomy &mdash; we built the genre hierarchy.</li><li>Label tags are noisy &mdash; only coherent ones trusted.</li><li>Blended sources reach ~68% coverage together.</li></ul>" },
+    { presenter: "NIALL",   title: "MusicBrainz",           logo: "musicbrainz-logo.svg", body: "<ul><li>Open-source encyclopedia of music metadata.</li><li>Hosted the full database in Postgres, exported to Parquet tables.</li><li>SchemaSpy + Claude gave instant schema answers &mdash; skipping costly joins.</li><li>Pulled artists, albums, tags, labels, areas &amp; countries.</li></ul>" },
+    { presenter: "NIALL",   title: "Genre Feature",         body: "<ul><li>Blended 3 tag sources &mdash; album, artist &amp; label (weighted <code>1.0</code> / <code>0.5</code> / <code>0.3</code>).</li><li>Label tags are noisy &mdash; only genre-coherent ones trusted.</li><li>Built a genre hierarchy: ~2.7k subgenres &rarr; ~20 parent families.</li><li>Together the sources reach ~68% coverage.</li></ul>" },
+    { presenter: "NIALL",   title: "Feature Matrices",      body: "<ul><li>Each feature becomes a table &mdash; one row per album.</li><li>They capture different angles: genre, popularity &amp; more.</li><li>Every feature is built the same way, so they all line up.</li><li>These tables are the building blocks of our recommender.</li></ul>" },
 
     { presenter: "ARSALAN", title: "Last.fm Web Scraping", placeholder: true,  body: "Collecting listening and tag data by scraping Last.fm — pipeline, rate limiting, and data cleaning." },
     { presenter: "ARSALAN", title: "Popularity Feature", placeholder: true,    body: "Turning play counts and listener stats into a normalized popularity feature for the model." },
