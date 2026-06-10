@@ -45,6 +45,6 @@ Talking points:
   overfitting to a few favourite albums.
 - Show a before/after example if you have one (neighbours improving after tuning).
 - Connect to the app: the tuned weights become the **defaults**, but users can still override
-  them with the sliders → hand off to Nijit.
+  them with the sliders → hand off to Nijat.
 
 *(Ref to confirm: `4-model/` tuning notebooks; `data/best_weights.json`.)*

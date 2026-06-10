@@ -72,7 +72,7 @@ reference cassettes). Keep the mapping as-is:
 | NIALL | teal |
 | ARSALAN | amber / yellow |
 | NILS | orange |
-| NIJIT | red / multi |
+| NIJAT | red / multi |
 
 ## Placeholder slides
 

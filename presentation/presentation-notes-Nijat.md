@@ -1,4 +1,4 @@
-# Speaker Notes — Nijit (Slides 10–11)
+# Speaker Notes — Nijat (Slides 10–11)
 
 > **Template.** These slides are still placeholders in the deck. Fill in the `body` for slides 10
 > and 11 in `presentation/index.html` (aim for ~4 single-line bullets each — see

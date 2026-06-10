@@ -16,7 +16,7 @@ Talking points:
   sliders let you tune how much genre, popularity, etc. drive the result. Hence the cassette /
   "tuning" theme.
 - Quick intro of the team and who owns which part (Niall → data + genre, Arsalan → Last.fm +
-  popularity, Nils → KNN + tuning, Nijit → weighted cosine + app).
+  popularity, Nils → KNN + tuning, Nijat → weighted cosine + app).
 - One sentence on the pipeline: source data → features → similarity model → app.
 
 ---
