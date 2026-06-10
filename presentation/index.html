@@ -376,8 +376,8 @@
     { presenter: "NILS",    title: "KNN Model", placeholder: true,             body: "Building the k-nearest-neighbors recommender — feature space, distance metric, and baseline results." },
     { presenter: "NILS",    title: "Model Tuning", placeholder: true,          body: "Tuning k, feature weights, and preprocessing to improve recommendation quality and evaluation metrics." },
 
-    { presenter: "NIJAT",   title: "Weighted Cosine Model", body: "<ul><li>Picks up from Nils&rsquo;s KNN &mdash; but instead of one fixed, pre-built model, we score similarity live, the moment you ask.</li><li>Every knob is one signal &mdash; genre, popularity, era &mdash; turn it up and that signal counts for more.</li><li>Re-ranks all <code>1.76M</code> albums in under a second &mdash; no retraining, no waiting.</li><li>This is what makes &ldquo;tune the algorithm to your sound&rdquo; real.</li></ul>" },
-    { presenter: "NIJAT",   title: "App UI",                body: "<ul><li>Built with Streamlit &mdash; search an artist, pick an album, get 10 similar back.</li><li>A mixing board: knobs for each signal, faders to filter live albums &amp; greatest hits.</li><li>Two ways in &mdash; <em>Find Similar</em> from an album, or <em>Explore</em> by genre.</li><li>From MusicBrainz &amp; Last.fm data, to features, to this &mdash; tune the algorithm to your perfect sound.</li></ul>" },
+    { presenter: "NIJAT",   title: "Your Personal Mix", body: "<ul><li>No pre-built model &mdash; we score similarity live, the moment you ask.</li><li>One knob per signal &mdash; turn it up, it matters more.</li><li>Re-ranks <code>1.76M</code> albums in under a second.</li><li>Change the weights, not the model.</li></ul>" },
+    { presenter: "NIJAT",   title: "Try It Live", body: "<ul><li>Search an artist, pick an album, get 10 similar.</li><li>Knobs to weight signals, faders to filter live &amp; greatest-hits.</li><li>Two modes &mdash; <em>Find Similar</em> or <em>Explore</em> by genre.</li><li>Data &rarr; features &rarr; your perfect sound.</li></ul>" },
   ];
 
   let current = 0;

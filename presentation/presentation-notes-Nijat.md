@@ -1,52 +1,46 @@
 # Speaker Notes — Nijat (Slides 10–11)
 
-> **Template.** These slides are still placeholders in the deck. Fill in the `body` for slides 10
-> and 11 in `presentation/index.html` (aim for ~4 single-line bullets each — see
-> `presentation-style-guide.md`), then drop the "PLACEHOLDER SLIDE" tag for them. The suggestions
-> below are starting points — confirm the details against the app code before presenting.
+Talking points based on the current slide content. Bullets on the slides are the headlines;
+these notes are what to say around them.
 
 ---
 
-## Slide 10 — Weighted Cosine Model
+## Slide 10 — Your Personal Mix
 
-**Status:** placeholder.
-
-Suggested bullet directions (pick ~4):
-- Cosine similarity with **per-feature-block weights** applied at runtime.
-- Computed **on the fly** — no pre-trained model file needed.
-- One **knob = one feature block** (genre, popularity, …) the user can dial.
-- Lets users reshape recommendations live without re-running anything.
+**On slide:** no pre-built model · one knob per signal · re-ranks 1.76M in under a second · change the weights, not the model.
 
 Talking points:
-- Contrast with Nils's KNN: instead of a fixed pre-built neighbour index, this computes
-  **weighted cosine similarity at request time** using the current slider values.
-- Explain how weights scale each block before the similarity is taken — turning a knob up makes
-  that block matter more.
-- Why this design: it's what makes the tagline real — **"tune the algorithm to your perfect
-  sound"** — instant, interactive, no rebuild.
-- Mention the clean mapping: each slider ties to exactly one feature matrix / block.
-
-*(Ref to confirm: `5-app/engine.py` (`weighted_cosine`), `5-app/config.py` block files.)*
+- Pick up from Nils: his **KNN works out all the neighbors ahead of time** and saves them as one
+  fixed model.
+- My part flips that: **no model built in advance**. We work out how similar albums are **live —
+  the moment you ask**.
+- Why? Because we want the user to **change things in real time**. Each knob is one signal —
+  **genre, popularity, era**. Turn a knob up, that signal **counts for more** in the result.
+- With a fixed model, every change = **retrain 1.76M albums = a long wait**. Our way: **under a
+  second**, no retrain.
+- The key line: **"change the weights, not the model."** Same data, infinite settings.
+- This is what makes the tagline literal — **tune the algorithm to your sound**.
+- Segue: "Let me show you what that feels like" -> slide 11 / live demo.
 
 ---
 
-## Slide 11 — App UI
+## Slide 11 — Try It Live (the app + live demo)
 
-**Status:** placeholder.
-
-Suggested bullet directions (pick ~4):
-- Built with **Streamlit** — interactive, reactive UI.
-- **Artist/album search** to pick a seed.
-- **Sliders/faders** to weight genre, popularity, and content filters (e.g. Live Albums,
-  Greatest Hits).
-- **Explore** view + the recommendation results experience.
+**On slide:** search -> pick -> 10 similar · knobs + filter faders · Find Similar / Explore · data -> features -> your perfect sound.
 
 Talking points:
-- Give a quick **live demo** if possible: search an artist → see recommendations → move a slider
-  → watch the results change in real time.
-- Point out the controls and what each does; tie the faders back to the feature blocks (slide 10).
-- Mention any nice touches (Explore tab, genre/country filters, the overall look & feel).
-- Close the loop on the whole pipeline: MusicBrainz + Last.fm data → features → weighted cosine
-  → this app. End on the tagline.
+- This is the finished product. **Built with Streamlit.** we designed the whole thing to feel
+  like a **mixing board**.
+- **Demo flow (do it live):**
+  1. **Search an artist** — e.g. Radiohead -> pick **Kid A**. It returns **10 similar albums**.
+  2. **Turn a knob** — results **change instantly**, live. (Pause — let them watch the change.)
+  3. **Faders** — filter out **live albums** and **greatest-hits** collections.
+  4. **Two modes** — *Find Similar* (from an album) and *Explore* (pick genres by mood).
+- Keep the demo **short and safe** — one search, one knob turn, one filter. Backup video ready in
+  case of bad WiFi.
+- **Closing line (only if I'm closing the talk):** tie the whole pipeline together —
+  **MusicBrainz + Last.fm data -> features -> Nils's model -> this app you can play with.**
+  End on the tagline: *tune the algorithm to your perfect sound.*
+- If someone else closes: stop after the demo, hand off cleanly.
 
-*(Ref to confirm: `5-app/app.py`, `5-app/README.md`, `docs/05-app.md`.)*
+---
