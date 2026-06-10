@@ -2,7 +2,7 @@
 
 Album recommendation engine built on the MusicBrainz database. Enter an artist you love, pick one of their albums, and get 10 similar albums recommended by a KNN model trained on community tags, ratings, label data, artist country, track statistics, release era, and Last.fm popularity.
 
-Three model versions are available for side-by-side comparison; the current app applies feature weights in real time without a pre-fitted model.
+The current app applies feature weights in real time without a pre-fitted model. (Older side-by-side model-comparison apps are retired to `archive/`.)
 
 ## How it works
 
@@ -10,7 +10,7 @@ Three model versions are available for side-by-side comparison; the current app 
 2. **EDA** — notebooks explore the raw data at the album, artist, and joined dataset level.
 3. **Features** — sparse feature matrices are built from genre tags, labels, ratings, artist country, album track statistics, release era, and Last.fm listener/scrobble counts.
 4. **Model** — cosine-distance KNN models are trained on the L2-normalised feature matrix. Three versions exist, each adding more features.
-5. **App** — a Streamlit app serves recommendations in the browser, with a comparison view across all three models.
+5. **App** — a modular Streamlit app (`5-app/app.py`) serves recommendations in the browser, reweighting features in real time via sidebar knobs, with a tag-based Explore tab.
 
 See the [`docs/`](docs/) folder for detailed documentation on each step.
 
@@ -48,7 +48,7 @@ pip install -r requirements.txt
 streamlit run 5-app/app.py
 ```
 
-The app opens at **http://localhost:8501**. Start typing an artist in the live search box to pick one, choose a starting album, and get recommendations from the v3 feature set. You can reweight features (genre, record label, country, track stats, era, and Last.fm popularity) in real time using guitar-amp-style **knobs** (0–11) in the sidebar. Ratings weight auto-syncs to the Popularity dial. Two mixing-console-style **vertical faders** — **Live Albums** (Live/Both/Studio) and **Greatest Hits** (Hits/Both/Albums) — narrow results by MusicBrainz release type.
+The app opens at **http://localhost:8505** (port set in `5-app/.streamlit/config.toml`). Start typing an artist in the live search box to pick one, choose a starting album, and get recommendations from the v3 feature set. You can reweight features (genre, record label, country, track stats, era, and Last.fm popularity) in real time using guitar-amp-style **knobs** (0–11) in the sidebar. Ratings weight auto-syncs to the Popularity dial. Two mixing-console-style **vertical faders** — **Live Albums** (Live/Both/Studio) and **Greatest Hits** (Hits/Both/Albums) — narrow results by MusicBrainz release type.
 
 No database connection is needed — the Parquet files and feature matrices in `data/` are all that's required. (The trained `.joblib` models used by the older comparison apps are not committed; retrain them with the v2/v3 notebooks if you want those apps. Older monolithic app files are archived in `5-app/archive/`.)
 
@@ -66,6 +66,8 @@ mixtape/
 │   ├── 03-feature-country-import.ipynb      Import: artist country SQL → Parquet (needs Postgres)
 │   ├── 04-feature-track-stats-import.ipynb  Import: track stats SQL → Parquet (needs Postgres)
 │   ├── 05-lastfm-scraper.ipynb              Scrape: Last.fm listener/scrobble counts → data/lastfm_data.parquet
+│   ├── 06-extract-secondary-type.ipynb      Import: live/compilation flags → data/raw/mb_album_secondary_type.parquet
+│   ├── 07-extract-tag-area.ipynb            Import: tag vocabulary + area names → data/raw/mb_tag.parquet, mb_area.parquet
 │   ├── queries/                             SQL queries for DuckDB Postgres extraction (incl. live/compilation flags)
 │   ├── schema-diagrams.md                   Parquet table relationships and pipeline data flow
 │   └── SchemaSpy/                           Auto-generated HTML reference for the MusicBrainz Postgres schema
@@ -95,16 +97,18 @@ mixtape/
 │   ├── 05-knn-v4-training.ipynb             Train: v4 KNN model (in progress)
 │   ├── 06-evaluate-lastfm.ipynb             Evaluate: recommendation quality vs Last.fm listening data
 │   └── tuning/                              Weight tuning experiments (v2/v3/v4)
-├── 5-app/
-│   ├── app.py                               Streamlit app (v1 only)
-│   ├── app_v2.py                            Streamlit app (v1 vs v2 comparison)
-│   ├── app_v3.py                            Streamlit app (v1 vs v2 vs v3 comparison)
-│   ├── app_v3_weighted.py                   Streamlit app (v3 features, runtime knobs + filters) — current
-│   ├── app_v6.py                            Streamlit app (experimental — on-the-fly cosine, v3/v4 features)
-│   └── knob_component/                      Custom HTML/SVG sidebar widgets (rotary knobs + fader switches)
+├── 5-app/                                   Streamlit app (modular — run app.py)
+│   ├── app.py                               Entry point: page config, tabs, result rendering
+│   ├── config.py                            Constants, presets, feature-block config, weight↔dial helpers
+│   ├── engine.py                            Data loading, weighted-cosine recs, auto-tune, explore search
+│   ├── controls.py                          Sidebar: presets, knob panel, auto-tune, content-filter faders
+│   ├── style.py                             Dark/light themes + CSS
+│   ├── fader_component/                     Custom HTML/SVG vertical faders (content filters)
+│   └── knob_component/                      Custom HTML/SVG rotary knob panel (feature weights)
 ├── data/
 │   ├── mb_*.parquet                         Raw MusicBrainz exports (committed)
 │   ├── sql_feature_*.parquet                Country + track-stats feature exports (committed)
+│   ├── raw/                                 Tag/area vocab + secondary-type extracts (committed)
 │   ├── features/                            Sparse feature matrices + index (.npz, .pkl) (committed)
 │   ├── model/                               v1 model artefacts (gitignored)
 │   ├── model_v2/                            v2 model artefacts (gitignored)

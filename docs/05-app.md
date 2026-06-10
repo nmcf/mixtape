@@ -13,7 +13,7 @@ source env/bin/activate
 streamlit run 5-app/app.py
 ```
 
-The app opens at `http://localhost:8501` by default.
+The app opens at `http://localhost:8505` (port set in `5-app/.streamlit/config.toml`).
 
 ## Module overview
 
@@ -129,7 +129,24 @@ All resources cached with `@st.cache_resource`:
 | popularity matrix | `data/features/album_lastfm_popularity_matrix.npz` | Optional — Last.fm data |
 | album index | `data/features/album_ids.pkl` | Master row index |
 | lookup table | `data/mb_album_artists.parquet` | album_id → name + artist_name |
-| secondary types | `data/mb_album_secondary_type.parquet` | Live / compilation flags |
+| secondary types | `data/raw/mb_album_secondary_type.parquet` | Live / compilation flags |
+
+Paths auto-resolve under `data/raw/` then `data/` via `engine._find_parquet()`.
+
+## Required data files & how to build them
+
+The committed feature matrices in `data/features/` are enough to run **Find Similar**. The two
+extra tabs/filters need a few raw extracts:
+
+| Feature | Files | Build with |
+|---------|-------|-----------|
+| **Find Similar** | `data/features/*.npz` (genre, record_label, ratings, country, track_stats, era/temporal, popularity), `data/features/album_ids.pkl`, `data/mb_album_artists.parquet` | `3-features/*` notebooks |
+| **Content filters** | `data/raw/mb_album_secondary_type.parquet` | `1-data/06-extract-secondary-type.ipynb` |
+| **Explore** (required) | `data/raw/mb_tag.parquet` (tag vocabulary) + `data/mb_album_tag.parquet` | `1-data/07-extract-tag-area.ipynb` |
+| **Explore** (optional country/decade filters) | `data/raw/mb_area.parquet`, `data/mb_album_country.parquet`, `data/mb_release_year.parquet` | `1-data/07-extract-tag-area.ipynb` |
+
+If a file is missing the feature **degrades gracefully** — Explore shows a hint, the Popularity
+knob disappears, content filters become no-ops — rather than crashing.
 
 ## Theme
 

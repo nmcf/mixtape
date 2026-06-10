@@ -17,9 +17,9 @@ Numbers are after the album-scope rebuild (universe = 1,758,488).
 
 v1/v2 use the separate `album_labels_matrix` + `album_types_matrix`; v3 uses the combined `album_record_label_matrix`. v2/v3 index far more albums than v1 because their dense country/track-stats blocks give nearly every album some signal, whereas v1's tag-only feature set leaves ~0.7M albums empty.
 
-**v4 is in progress** — `05-knn-v4-training.ipynb` and the tuning notebooks in `4-model/tuning/` are experimental. `06-evaluate-lastfm.ipynb` evaluates recommendation quality against Last.fm listening data. The current production app (`app_v3_weighted.py`) does not use a trained model artefact — it applies weights at runtime directly over the raw feature matrices.
+**v4 is in progress** — `05-knn-v4-training.ipynb` and the tuning notebooks in `4-model/tuning/` are experimental. `06-evaluate-lastfm.ipynb` evaluates recommendation quality against Last.fm listening data. The current production app (`5-app/app.py`) does not use a trained model artefact — it applies weights at runtime directly over the raw feature matrices.
 
-> **Note:** the trained model artefacts (`data/model/`, `data/model_v2/`, `data/model_v3/`) are gitignored — large and regenerable. The current app (`app_v3_weighted.py`) reads the raw feature matrices directly and needs no trained model; see [05-app.md](05-app.md).
+> **Note:** the trained model artefacts (`data/model/`, `data/model_v2/`, `data/model_v3/`) are gitignored — large and regenerable. The current app (`5-app/app.py`) reads the raw feature matrices directly and needs no trained model; see [05-app.md](05-app.md).
 
 ## Output files
 

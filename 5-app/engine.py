@@ -97,18 +97,25 @@ def load_explore_data():
     # Album ↔ tag mapping (the big table)
     album_tags_df = pd.read_parquet(atag_path)
 
-    # Album metadata (year) — optional
+    # Album metadata (year) — optional.
+    # Year lives in mb_album_country.parquet (album_id, album_year); mb_album.parquet
+    # has no year column. Fall back to mb_release_year.parquet if country is absent.
     album_meta_df = None
-    if album_path:
-        cols_to_read = ['id', 'name']
-        # Try loading with the columns that exist
+    if country_path:
         try:
-            test = pd.read_parquet(album_path, columns=['id'])
-            album_meta_df = pd.read_parquet(album_path, columns=['id', 'name', 'begin_date_year'])
-            album_meta_df = album_meta_df.rename(columns={'id': 'album_id', 'name': 'album_name',
-                                                           'begin_date_year': 'album_year'})
+            am = pd.read_parquet(country_path, columns=['album_id', 'album_year'])
+            album_meta_df = am.dropna(subset=['album_year']).drop_duplicates('album_id')
         except Exception:
             album_meta_df = None
+    if album_meta_df is None:
+        ry_path = _find_parquet('mb_release_year.parquet')
+        if ry_path:
+            try:
+                ry = pd.read_parquet(ry_path)
+                ry = ry.rename(columns={'release_group_meta_year': 'album_year'})
+                album_meta_df = ry.dropna(subset=['album_year']).drop_duplicates('album_id')
+            except Exception:
+                album_meta_df = None
 
     # Country options — optional
     country_options = None

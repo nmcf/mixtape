@@ -238,7 +238,7 @@ with tab_similar:
                          sec_types=sec_types,
                          live_filter=st.session_state.get('live_filter', 'BOTH'),
                          comp_filter=st.session_state.get('comp_filter', 'BOTH'))
-        active = "  ·  ".join(f"{BLOCK_LABELS[k]} {weights[k]:.2f}"
+        active = "  ·  ".join(f"{BLOCK_LABELS[k].replace('<br>', ' ')} {weights[k]:.2f}"
                               for k in KNOB_BLOCKS if weights.get(k, 0) > 0)
         render_results_table(recs, "You Might Also Like",
                              f"MIX › {active}", show_similarity=True)
@@ -282,8 +282,8 @@ with tab_explore:
     tag_options, album_tags_df, album_meta_df, country_options = explore_data
 
     if tag_options is None:
-        st.info("Explore requires raw parquet files (mb_tag.parquet, mb_album_tag.parquet) "
-                "in data/raw/ or data/. Run duckdb-parquet.ipynb first.")
+        st.info("Explore requires the tag vocabulary (mb_tag.parquet) in data/raw/ or data/. "
+                "Run 1-data/07-extract-tag-area.ipynb to generate it.")
     else:
         st.markdown("""
         <div style="font-family:'DM Serif Display',serif;font-size:1.3rem;color:var(--gold);margin-bottom:.5rem;">

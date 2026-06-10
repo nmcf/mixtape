@@ -150,6 +150,18 @@ Two DuckDB SQL queries export album-type flags from the MusicBrainz Postgres ins
 
 Each output is a single `album_id` column — presence in the file means the flag applies to that album.
 
+## App support extracts (`1-data/06`, `1-data/07` → `data/raw/`)
+
+Two small DuckDB import notebooks produce the raw extracts the Streamlit app's Explore tab and content filters need. They attach Postgres the same way as `01` and write to `data/raw/` (committed alongside the other parquets).
+
+| Notebook | Output | Purpose |
+|---|---|---|
+| `06-extract-secondary-type.ipynb` | `data/raw/mb_album_secondary_type.parquet` | Per-album `is_live` / `is_compilation` flags — the app's Live Albums + Greatest Hits faders |
+| `07-extract-tag-area.ipynb` | `data/raw/mb_tag.parquet` | Tag **vocabulary** (`id`, `name`, `ref_count`) — resolves the numeric `tag_id`s in `mb_album_tag.parquet` to names for the Explore genre picker (**required for Explore**) |
+| `07-extract-tag-area.ipynb` | `data/raw/mb_area.parquet` | Area `id` → `name` — Explore country filter (optional) |
+
+> `mb_album_tag.parquet` (from `01`) stores only numeric `tag_id`s; the human-readable names live in `mb_tag.parquet`. Without it the Explore tab degrades to a hint message.
+
 ## Notes
 
 - The album scope is defined once in the `valid_albums` table and every album export joins to it. Scope: primary `type = 1` (Album), **must have an Official release** (drops bootlegs), and one of — studio (no secondary types), live (secondary type Live), or single-artist best-of (secondary type Compilation, non-VA). All other secondary types (Soundtrack, Remix, DJ-mix, Demo, …) and Various-Artists compilations are excluded. Validated: U2 goes from 1,004 → 45 release groups.
