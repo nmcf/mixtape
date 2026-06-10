@@ -370,14 +370,14 @@
     { presenter: "NIALL",   title: "Genre Feature",         body: "<ul><li>Blended 3 tag sources: album, artist &amp; label.</li><li>Weighted tiers &mdash; album <code>1.0</code>, artist <code>0.5</code>, label <code>0.3</code>.</li><li>Label tags reinforce existing signal &amp; rescue untagged albums.</li><li>Rolled ~2.7k subgenres up to ~20 parent families.</li></ul>" },
     { presenter: "NIALL",   title: "Tag Insights",          body: "<ul><li>Sparse, power-law tags &mdash; a few cover most (albums ~46%, artists ~9%).</li><li>No formal taxonomy &mdash; we built the genre hierarchy.</li><li>Label tags are noisy &mdash; only coherent ones trusted.</li><li>Blended sources reach ~68% coverage together.</li></ul>" },
 
-    { presenter: "ARSALAN", title: "Last.fm Web Scraping",  body: "Collecting listening and tag data by scraping Last.fm — pipeline, rate limiting, and data cleaning." },
-    { presenter: "ARSALAN", title: "Popularity Feature",    body: "Turning play counts and listener stats into a normalized popularity feature for the model." },
+    { presenter: "ARSALAN", title: "Last.fm Web Scraping", placeholder: true,  body: "Collecting listening and tag data by scraping Last.fm — pipeline, rate limiting, and data cleaning." },
+    { presenter: "ARSALAN", title: "Popularity Feature", placeholder: true,    body: "Turning play counts and listener stats into a normalized popularity feature for the model." },
 
-    { presenter: "NILS",    title: "KNN Model",             body: "Building the k-nearest-neighbors recommender — feature space, distance metric, and baseline results." },
-    { presenter: "NILS",    title: "Model Tuning",          body: "Tuning k, feature weights, and preprocessing to improve recommendation quality and evaluation metrics." },
+    { presenter: "NILS",    title: "KNN Model", placeholder: true,             body: "Building the k-nearest-neighbors recommender — feature space, distance metric, and baseline results." },
+    { presenter: "NILS",    title: "Model Tuning", placeholder: true,          body: "Tuning k, feature weights, and preprocessing to improve recommendation quality and evaluation metrics." },
 
-    { presenter: "NIJAT",   title: "Weighted Cosine Model", body: "A weighted cosine-similarity model — applying per-feature weights to balance genre, popularity, and other signals." },
-    { presenter: "NIJAT",   title: "App UI",                body: "The Streamlit app — reactive artist search, weight controls, and the recommendation results experience." },
+    { presenter: "NIJAT",   title: "Weighted Cosine Model", body: "<ul><li>Picks up from Nils&rsquo;s KNN &mdash; but instead of one fixed, pre-built model, we score similarity live, the moment you ask.</li><li>Every knob is one signal &mdash; genre, popularity, era &mdash; turn it up and that signal counts for more.</li><li>Re-ranks all <code>1.76M</code> albums in under a second &mdash; no retraining, no waiting.</li><li>This is what makes &ldquo;tune the algorithm to your sound&rdquo; real.</li></ul>" },
+    { presenter: "NIJAT",   title: "App UI",                body: "<ul><li>Built with Streamlit &mdash; search an artist, pick an album, get 10 similar back.</li><li>A mixing board: knobs for each signal, faders to filter live albums &amp; greatest hits.</li><li>Two ways in &mdash; <em>Find Similar</em> from an album, or <em>Explore</em> by genre.</li><li>From MusicBrainz &amp; Last.fm data, to features, to this &mdash; tune the algorithm to your perfect sound.</li></ul>" },
   ];
 
   let current = 0;
@@ -402,7 +402,7 @@
 
     presenterEl.textContent = s.presenter;
     titleEl.innerHTML = s.title;
-    bodyEl.innerHTML = s.body + (current >= 5 ? '<br><span class="placeholder-tag">PLACEHOLDER SLIDE</span>' : '');
+    bodyEl.innerHTML = s.body + (s.placeholder ? '<br><span class="placeholder-tag">PLACEHOLDER SLIDE</span>' : '');
 
     if (s.logo) {
       logoEl.src = s.logo; logoEl.style.display = "block";
