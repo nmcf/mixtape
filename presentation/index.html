@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mixtape — Presentation</title>
+<style>
+  :root {
+    --walkman-body: #2b2d33;
+    --walkman-body-2: #1d1f24;
+    --accent: #ff7a18;
+    --accent-2: #ffd23f;
+    --metal: #c7ccd1;
+    --metal-dark: #8b9197;
+    --text: #f5f5f2;
+
+    /* per-slide theme (set by JS) */
+    --stripe-grad: linear-gradient(180deg,#1f8a8a 0 25%,#2bb3b3 25% 50%,#f2c14e 50% 75%,#e07a3f 75% 100%);
+    --theme-accent: #1f8a8a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    font-family: "Courier New", ui-monospace, monospace;
+    background: radial-gradient(circle at 50% 0%, #3a3d45 0%, #15161a 70%);
+    color: var(--text);
+    overflow: hidden;
+  }
+
+  .stage {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  /* ---------- Walkman shell ---------- */
+  .walkman {
+    width: min(960px, 96vw);
+    background: linear-gradient(160deg, var(--walkman-body) 0%, var(--walkman-body-2) 100%);
+    border-radius: 26px;
+    padding: 22px;
+    box-shadow:
+      0 30px 60px rgba(0,0,0,0.6),
+      inset 0 2px 0 rgba(255,255,255,0.08),
+      inset 0 -3px 8px rgba(0,0,0,0.6);
+    border: 2px solid #0c0d10;
+    position: relative;
+  }
+
+  .brand-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    padding: 0 6px;
+  }
+  .brand { font-weight: bold; letter-spacing: 3px; font-size: 15px; color: var(--metal); }
+  .brand .accent { color: var(--accent); }
+  .model-badge {
+    font-size: 10px; letter-spacing: 2px; color: var(--metal-dark);
+    border: 1px solid var(--metal-dark); border-radius: 4px; padding: 2px 8px;
+  }
+
+  /* recessed slot the cassette sits in */
+  .slot {
+    background: linear-gradient(180deg, #15171d, #0c0d11);
+    border-radius: 14px;
+    padding: 16px;
+    border: 2px solid #0a0b0e;
+    box-shadow: inset 0 4px 16px rgba(0,0,0,0.8);
+  }
+
+  /* ============ THE CASSETTE (slide background) ============ */
+  .cassette-body {
+    position: relative;
+    min-height: 470px;
+    border-radius: 16px;
+    padding: 22px 30px 64px;
+    display: flex;
+    flex-direction: column;
+    /* speckled black plastic */
+    background-color: #18191c;
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.28'/%3E%3C/svg%3E"),
+      radial-gradient(120% 90% at 50% 0%, #313338 0%, #15161a 60%);
+    box-shadow:
+      inset 0 2px 0 rgba(255,255,255,0.06),
+      inset 0 -10px 24px rgba(0,0,0,0.7),
+      0 4px 10px rgba(0,0,0,0.5);
+    border: 1px solid #050506;
+  }
+
+  /* corner screws */
+  .screw {
+    position: absolute; width: 16px; height: 16px; border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, #4a4c51, #1a1b1e 70%);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.8), 0 1px 1px rgba(255,255,255,0.05);
+  }
+  .screw.tl { top: 14px; left: 14px; }
+  .screw.tr { top: 14px; right: 14px; }
+  .screw.bl { bottom: 14px; left: 14px; }
+  .screw.br { bottom: 14px; right: 14px; }
+
+  /* ---------- cream paper label ---------- */
+  .paper {
+    position: relative;
+    flex: 1;
+    background: linear-gradient(160deg, #f7efdc 0%, #efe2c2 100%);
+    border-radius: 6px;
+    padding: 0 0 16px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(0,0,0,0.12);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* colored retro stripe bands at top of label */
+  .stripes {
+    height: 46px;
+    background: var(--stripe-grad);
+    box-shadow: inset 0 -1px 0 rgba(0,0,0,0.15);
+  }
+
+  .mb-logo {
+    position: absolute;
+    right: 28px; top: 64px;
+    height: 96px; width: auto;
+    display: none;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.25));
+  }
+
+  .ninety {
+    position: absolute;
+    top: 56px; right: 18px;
+    font-family: Arial, sans-serif;
+    font-weight: 800;
+    font-size: 34px;
+    color: var(--theme-accent);
+    letter-spacing: -1px;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+  }
+
+  /* slide text region on the label */
+  .slide-content {
+    padding: 16px 34px 4px;
+  }
+  .presenter {
+    font-size: 12px; letter-spacing: 4px; text-transform: uppercase;
+    color: var(--theme-accent); font-weight: bold; margin-bottom: 4px;
+  }
+  .slide-title {
+    font-size: clamp(26px, 4.4vw, 40px);
+    line-height: 1.04;
+    color: #20180e;
+    margin-bottom: 12px;
+    font-family: "Helvetica Neue", "Arial Narrow", Arial, sans-serif;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .slide-body {
+    font-size: 14.5px; line-height: 1.55; color: #3a2f20; max-width: 92%;
+  }
+  .slide-body ul { padding-left: 20px; }
+  .slide-body li { margin-bottom: 3px; }
+  .slide-body code {
+    font-family: "Courier New", monospace;
+    background: rgba(0,0,0,0.07);
+    padding: 0 4px; border-radius: 3px;
+    font-size: 0.92em; color: #6b4a1c;
+  }
+  .placeholder-tag {
+    display: inline-block; margin-top: 12px; font-size: 10px; letter-spacing: 2px;
+    background: rgba(0,0,0,0.06); border: 1px dashed #9a8763;
+    color: #7a6843; padding: 3px 9px; border-radius: 3px;
+  }
+
+  /* ---------- reel windows (anchored to bottom of label) ---------- */
+  .tape-window {
+    margin-top: auto;
+    align-self: center;
+    display: flex;
+    gap: 70px;
+    align-items: center;
+    background: #121214;
+    border-radius: 16px;
+    padding: 12px 30px;
+    box-shadow: inset 0 2px 10px rgba(0,0,0,0.85), 0 1px 0 rgba(255,255,255,0.4);
+    position: relative;
+  }
+  /* static glare across the glossy window */
+  .tape-window::after {
+    content: ""; position: absolute; inset: 0; border-radius: 16px;
+    background: linear-gradient(115deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 38%);
+    pointer-events: none;
+  }
+  .reel {
+    width: 86px; height: 86px; border-radius: 50%;
+    /* wound tape: faint concentric rings on a charcoal spool */
+    background:
+      repeating-radial-gradient(circle, #46433e 0 2px, #38352f 2px 4.5px);
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,0.06),
+      inset 0 0 14px rgba(0,0,0,0.7),
+      0 1px 3px rgba(0,0,0,0.6);
+    position: relative;
+    animation: spin 4s linear infinite;
+    animation-play-state: paused;
+  }
+  .walkman.playing .reel { animation-play-state: running; }
+  /* six-prong clutch hub */
+  .reel::before {
+    content: ""; position: absolute; inset: 28%; border-radius: 50%;
+    background:
+      radial-gradient(circle, #0d0d0d 0 24%, rgba(0,0,0,0) 25%),
+      repeating-conic-gradient(#d7d7d7 0deg 13deg, #1a1a1a 13deg 60deg);
+    box-shadow: inset 0 0 0 2px #111, 0 0 3px rgba(0,0,0,0.6);
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---------- bottom transport (head opening) ---------- */
+  .transport {
+    position: absolute;
+    bottom: 18px; left: 50%; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 14px;
+  }
+  .transport .hole {
+    width: 12px; height: 12px; border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, #303236, #0c0d0f 70%);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.9);
+  }
+  .transport .head {
+    width: 150px; height: 18px; border-radius: 5px;
+    background: linear-gradient(180deg, #2a2c30, #131417);
+    box-shadow: inset 0 1px 2px rgba(255,255,255,0.06), inset 0 -2px 4px rgba(0,0,0,0.7);
+    position: relative;
+  }
+  .transport .head::before,
+  .transport .head::after {
+    content: ""; position: absolute; top: 4px; width: 10px; height: 10px;
+    background: #0a0b0d; border-radius: 2px;
+  }
+  .transport .head::before { left: 26px; }
+  .transport .head::after  { right: 26px; }
+
+  /* ---------- Transport control buttons ---------- */
+  .controls {
+    display: flex; align-items: center; justify-content: center;
+    gap: 14px; margin-top: 20px;
+  }
+  .btn {
+    background: linear-gradient(180deg, var(--metal), var(--metal-dark));
+    border: 2px solid #0a0b0e; border-radius: 8px;
+    width: 64px; height: 46px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: #1a1c20;
+    box-shadow: 0 4px 0 #5b6066, inset 0 2px 2px rgba(255,255,255,0.5);
+    transition: transform 0.05s, box-shadow 0.05s; user-select: none;
+  }
+  .btn:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 #5b6066, inset 0 2px 2px rgba(255,255,255,0.5);
+  }
+  .btn svg { width: 22px; height: 22px; fill: #1a1c20; }
+  .btn.active-skip { background: linear-gradient(180deg, var(--accent-2), var(--accent)); }
+  .btn-record svg { fill: #d61f1f; }
+
+  .meta-row {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 18px; padding: 0 6px;
+  }
+  .counter {
+    font-family: "Courier New", monospace;
+    background: #0c0d10; color: var(--accent-2);
+    border-radius: 6px; padding: 6px 12px;
+    font-size: 14px; letter-spacing: 3px;
+    border: 1px solid #000; box-shadow: inset 0 2px 6px rgba(0,0,0,0.8);
+  }
+  .progress {
+    flex: 1; height: 6px; margin: 0 16px;
+    background: #0c0d10; border-radius: 3px; overflow: hidden;
+  }
+  .progress > span {
+    display: block; height: 100%; width: 0%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    transition: width 0.3s ease;
+  }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <div class="walkman" id="walkman">
+      <div class="brand-row">
+        <div class="brand">MIX<span class="accent">TAPE</span></div>
+        <div class="model-badge">TPS-90 STEREO</div>
+      </div>
+
+      <div class="slot">
+        <div class="cassette-body" id="cassette">
+          <span class="screw tl"></span><span class="screw tr"></span>
+          <span class="screw bl"></span><span class="screw br"></span>
+
+          <div class="paper">
+            <div class="stripes"></div>
+            <div class="ninety" id="ninety">90</div>
+            <img class="mb-logo" id="logo" alt="" src="">
+
+            <div class="slide-content">
+              <div class="presenter" id="presenter">PRESENTER</div>
+              <div class="slide-title" id="title">Title</div>
+              <div class="slide-body" id="body">Body</div>
+            </div>
+            <div class="tape-window">
+              <div class="reel"></div>
+              <div class="reel"></div>
+            </div>
+          </div>
+
+          <div class="transport">
+            <span class="hole"></span>
+            <span class="head"></span>
+            <span class="hole"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn" id="prevBtn" title="Previous slide">
+          <svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5L9 12l11 7z"/></svg>
+        </button>
+        <button class="btn" title="Stop">
+          <svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12"/></svg>
+        </button>
+        <button class="btn" id="playBtn" title="Play / Pause">
+          <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+        <button class="btn btn-record" title="Record">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="6"/></svg>
+        </button>
+        <button class="btn" id="nextBtn" title="Next slide">
+          <svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM4 5l11 7L4 19z"/></svg>
+        </button>
+      </div>
+
+      <div class="meta-row">
+        <div class="counter" id="counter">01:10</div>
+        <div class="progress"><span id="progressBar"></span></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // per-presenter color themes (echoing the four reference tapes)
+  const themes = {
+    NIALL:   { accent: "#1f8a8a", stripes: "linear-gradient(180deg,#1f8a8a 0 25%,#2bb3b3 25% 50%,#f2c14e 50% 75%,#e07a3f 75% 100%)" },
+    ARSALAN: { accent: "#d9930a", stripes: "linear-gradient(180deg,#f4b400 0 25%,#f7c948 25% 50%,#e8871e 50% 75%,#c1440e 75% 100%)" },
+    NILS:    { accent: "#d8491b", stripes: "linear-gradient(180deg,#e8541e 0 25%,#f08c00 25% 50%,#f4b400 50% 75%,#2a9d8f 75% 100%)" },
+    NIJIT:   { accent: "#c1303c", stripes: "linear-gradient(180deg,#e63946 0 25%,#f4a261 25% 50%,#2a9d8f 50% 75%,#457b9d 75% 100%)" },
+  };
+
+  const slides = [
+    { presenter: "NIALL",   title: "Mixtape",               body: "<p style='font-size:17px;font-style:italic;color:#5a4a30;margin-bottom:10px;'>Tune the algorithm to your perfect sound.</p>An album recommendation engine that blends MusicBrainz metadata, Last.fm listening data, and similarity models to surface albums you'll love." },
+    { presenter: "NIALL",   title: "MusicBrainz",           logo: "musicbrainz-logo.svg", body: "<ul><li>Open-source encyclopedia of music metadata.</li><li>Hosted the full MusicBrainz database in Postgres.</li><li>Exported the parts we need to Parquet tables.</li><li>Key tables: artists, albums, tags &amp; ratings.</li></ul>" },
+    { presenter: "NIALL",   title: "Claude &amp; SchemaSpy",    body: "<ul><li>Started like cavemen, reading docs &amp; websites.</li><li>Ran SchemaSpy to map the DB into the repo.</li><li>Pointed Claude at the schema for instant answers.</li><li>No more hand-querying Postgres &mdash; caveman to AI.</li></ul>" },
+    { presenter: "NIALL",   title: "Genre Feature",         body: "Engineering the genre feature — how we extract, clean, and encode genre signals for the recommendation model." },
+
+    { presenter: "ARSALAN", title: "Last.fm Web Scraping",  body: "Collecting listening and tag data by scraping Last.fm — pipeline, rate limiting, and data cleaning." },
+    { presenter: "ARSALAN", title: "Popularity Feature",    body: "Turning play counts and listener stats into a normalized popularity feature for the model." },
+
+    { presenter: "NILS",    title: "KNN Model",             body: "Building the k-nearest-neighbors recommender — feature space, distance metric, and baseline results." },
+    { presenter: "NILS",    title: "Model Tuning",          body: "Tuning k, feature weights, and preprocessing to improve recommendation quality and evaluation metrics." },
+
+    { presenter: "NIJIT",   title: "Weighted Cosine Model", body: "A weighted cosine-similarity model — applying per-feature weights to balance genre, popularity, and other signals." },
+    { presenter: "NIJIT",   title: "App UI",                body: "The Streamlit app — reactive artist search, weight controls, and the recommendation results experience." },
+  ];
+
+  let current = 0;
+
+  const presenterEl = document.getElementById("presenter");
+  const titleEl     = document.getElementById("title");
+  const bodyEl      = document.getElementById("body");
+  const counterEl   = document.getElementById("counter");
+  const progressEl  = document.getElementById("progressBar");
+  const logoEl      = document.getElementById("logo");
+  const ninetyEl    = document.getElementById("ninety");
+  const walkmanEl   = document.getElementById("walkman");
+  const rootEl      = document.documentElement;
+
+  function pad(n) { return String(n).padStart(2, "0"); }
+
+  function render() {
+    const s = slides[current];
+    const theme = themes[s.presenter] || themes.NIALL;
+    rootEl.style.setProperty("--stripe-grad", theme.stripes);
+    rootEl.style.setProperty("--theme-accent", theme.accent);
+
+    presenterEl.textContent = s.presenter;
+    titleEl.innerHTML = s.title;
+    bodyEl.innerHTML = s.body + '<br><span class="placeholder-tag">PLACEHOLDER SLIDE</span>';
+
+    if (s.logo) {
+      logoEl.src = s.logo; logoEl.style.display = "block";
+      ninetyEl.style.visibility = "hidden";
+    } else {
+      logoEl.style.display = "none";
+      ninetyEl.style.visibility = "visible";
+    }
+    counterEl.textContent = pad(current + 1) + ":" + pad(slides.length);
+    progressEl.style.width = ((current + 1) / slides.length * 100) + "%";
+  }
+
+  function flashSkip(btn) {
+    btn.classList.add("active-skip");
+    setTimeout(() => btn.classList.remove("active-skip"), 180);
+  }
+
+  function next() {
+    current = (current + 1) % slides.length;
+    render();
+    flashSkip(document.getElementById("nextBtn"));
+  }
+  function prev() {
+    current = (current - 1 + slides.length) % slides.length;
+    render();
+    flashSkip(document.getElementById("prevBtn"));
+  }
+
+  document.getElementById("nextBtn").addEventListener("click", next);
+  document.getElementById("prevBtn").addEventListener("click", prev);
+
+  // Play / pause toggles the spinning reels and swaps the icon
+  const playBtn = document.getElementById("playBtn");
+  const PLAY_ICON  = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+  const PAUSE_ICON = '<svg viewBox="0 0 24 24"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>';
+  playBtn.addEventListener("click", () => {
+    const playing = walkmanEl.classList.toggle("playing");
+    playBtn.innerHTML = playing ? PAUSE_ICON : PLAY_ICON;
+    playBtn.title = playing ? "Pause" : "Play";
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); next(); }
+    if (e.key === "ArrowLeft") { e.preventDefault(); prev(); }
+  });
+
+  render();
+</script>
+</body>
+</html>
