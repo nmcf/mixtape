@@ -332,7 +332,7 @@
         <button class="btn" id="prevBtn" title="Previous slide">
           <svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5L9 12l11 7z"/></svg>
         </button>
-        <button class="btn" title="Stop">
+        <button class="btn" id="stopBtn" title="Stop">
           <svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12"/></svg>
         </button>
         <button class="btn" id="playBtn" title="Play / Pause">
@@ -349,6 +349,7 @@
       <div class="meta-row">
         <div class="counter" id="counter">01:11</div>
         <div class="progress"><span id="progressBar"></span></div>
+        <div class="counter" id="timer">00:00</div>
       </div>
     </div>
   </div>
@@ -433,7 +434,19 @@
   document.getElementById("nextBtn").addEventListener("click", next);
   document.getElementById("prevBtn").addEventListener("click", prev);
 
-  // Play / pause toggles the spinning reels and swaps the icon
+  // ---- Timer (bottom-right) ----
+  const timerEl = document.getElementById("timer");
+  let elapsed = 0;          // seconds
+  let timerInt = null;
+  function fmtTime(s) { return pad(Math.floor(s / 60)) + ":" + pad(s % 60); }
+  function startTimer() {
+    if (timerInt) return;
+    timerInt = setInterval(() => { elapsed++; timerEl.textContent = fmtTime(elapsed); }, 1000);
+  }
+  function pauseTimer() { clearInterval(timerInt); timerInt = null; }
+  function resetTimer() { pauseTimer(); elapsed = 0; timerEl.textContent = fmtTime(0); }
+
+  // Play / pause toggles the spinning reels, swaps the icon, and runs the timer
   const playBtn = document.getElementById("playBtn");
   const PLAY_ICON  = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
   const PAUSE_ICON = '<svg viewBox="0 0 24 24"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>';
@@ -441,6 +454,15 @@
     const playing = walkmanEl.classList.toggle("playing");
     playBtn.innerHTML = playing ? PAUSE_ICON : PLAY_ICON;
     playBtn.title = playing ? "Pause" : "Play";
+    if (playing) startTimer(); else pauseTimer();
+  });
+
+  // Stop: halt the reels, reset the play button, and zero the timer
+  document.getElementById("stopBtn").addEventListener("click", () => {
+    walkmanEl.classList.remove("playing");
+    playBtn.innerHTML = PLAY_ICON;
+    playBtn.title = "Play";
+    resetTimer();
   });
 
   document.addEventListener("keydown", (e) => {
