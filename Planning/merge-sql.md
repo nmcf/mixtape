@@ -89,7 +89,7 @@ Each needs an evaluation decision before being added to the app or discarded.
 | `album_instrument_matrix.npz` | `3-features/09-feature-contributors.ipynb` | 1,008,102 × 591 | Normalised instrument profile (instruments appearing on ≥10 albums) with confidence weights |
 | `album_contributor_counts_matrix.npz` | `3-features/09-feature-contributors.ipynb` | 1,008,102 × 7 | Distinct contributor counts per role family, min-max scaled |
 | `album_year_matrix.npz` | `3-features/10-feature-year.ipynb` | TBD | Continuous imputed release year, min-max scaled; 98.9% coverage |
-| `album_tag_parent_matrix.npz` | `3-features/11-feature-tag-hierarchy.ipynb` + `12` | TBD | Tag hierarchy parents — backs off niche tags to broader genre parents |
+| `album_tag_parent_matrix.npz` | `3-features/01b-feature-tag-hierarchy.ipynb` (12 archived) | TBD | Tag hierarchy parents — backs off niche tags to broader genre parents |
 
 **Notes:**
 - All three contributor matrices (`role_family`, `instrument`, `contributor_counts`) were built

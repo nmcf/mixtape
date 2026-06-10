@@ -1,12 +1,12 @@
 # Feature Engineering
 
-**Notebooks:** `3-features/01-album-artist-index` (shared row index), `02-feature-genre`,
+**Notebooks:** `3-features/01-album-artist-index` (shared row index), `01b-feature-tag-hierarchy` (genre parent map → `tag_parents.csv`), `02-feature-genre`,
 `03-feature-label`, `04-feature-ratings` (v1 features), `05-feature-country`, `06-feature-track-stats`, `13-feature-lastfm-popularity` (popularity block), `14-feature-temporal` (era + year → temporal matrix, in app), `20-feature-assembly` (assembly overview for all v3 blocks).
 Exploratory analysis notebooks: `2-eda/05-EDA-tags-labels.ipynb` (tag/label coverage + genre blend), `2-eda/06-EDA-track-stats.ipynb` (track length, count, year coverage + feature correlations).
 
 > `07-feature-era.ipynb` and `10-feature-year.ipynb` have been consolidated into `14-feature-temporal.ipynb` and moved to `archive/`. Run `14-feature-temporal.ipynb` to rebuild all temporal outputs.
 
-> Notebooks `09-feature-contributors`, `11-feature-tag-hierarchy`, and `12-feature-tag-parents` contain experimental or in-progress feature work not yet integrated into the weighted app. Matrices from these notebooks need rebuilding against the 1,758,488-album universe before evaluation.
+> Notebook `09-feature-contributors` contains experimental feature work not yet integrated into the weighted app; its matrices need rebuilding against the 1,758,488-album universe before evaluation. `01b-feature-tag-hierarchy` is now part of the live genre pipeline — it produces `tag_parents.csv`, consumed by `02-feature-genre` to add the coarse parent-genre columns. `12-feature-tag-parents` is superseded by that integration (Option A) and moved to `archive/`.
 
 Transforms raw MusicBrainz data into sparse numeric matrices for the KNN model. Three model versions use progressively richer feature sets.
 
