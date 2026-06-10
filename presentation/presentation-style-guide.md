@@ -10,8 +10,16 @@ deck stays consistent when different people (and AI agents) add content.
 - Aesthetic: a Walkman / cassette tape. Each slide is rendered as a vivid cassette — textured
   black body, cream paper label with retro stripe bands, a "90" mark, reel windows, screws.
 - Navigation: the **skip-back / skip-forward** transport buttons move between slides (arrow
-  keys and spacebar also work). **Play** toggles the spinning reels + play/pause icon. **Stop**
-  and **Record** are cosmetic only.
+  keys and spacebar also work).
+- Transport controls:
+  - **Play / Pause** toggles the spinning reels + play/pause icon, and starts/pauses the
+    bottom-right **timer** (counts up `mm:ss`; pause freezes it, play resumes from where it
+    stopped).
+  - **Stop** halts the reels, resets the play button to the play icon, and **resets the timer
+    to `00:00`**.
+  - **Record** is cosmetic only (styled red).
+- The bottom-right counter is the **timer**; the bottom-left counter is the **slide number**
+  (`current : total`).
 
 ## Where the content lives
 
