@@ -78,6 +78,12 @@ render_auto_tune_buttons(blocks, ssq, album_id_to_row)
 st.sidebar.markdown("<hr style='margin:.2rem 0 .4rem;'>", unsafe_allow_html=True)
 render_controls(T)
 render_content_filters()
+if sec_types is None:
+    st.sidebar.warning(
+        "Content filters inactive — mb_album_secondary_type.parquet not found. "
+        "Run 1-data/06-extract-secondary-type.ipynb to generate it.",
+        icon="⚠️",
+    )
 
 # ── Derive weights from session state (set by controls) ──
 weights = get_weights()
@@ -91,6 +97,26 @@ for name in BLOCK_FILES:
 def is_queryable(album_id):
     r = album_id_to_row.get(int(album_id))
     return r is not None and combined_ssq[r] > 0
+
+
+def passes_content_filters(album_id):
+    """Apply the Live Albums / Greatest Hits faders — same semantics as recommend()."""
+    if sec_types is None:
+        return True
+    aid = int(album_id)
+    live_filter = st.session_state.get('live_filter', 'BOTH')
+    comp_filter = st.session_state.get('comp_filter', 'BOTH')
+    is_live = aid in sec_types['live']
+    is_comp = aid in sec_types['comp']
+    if live_filter == 'STUDIO' and is_live:
+        return False
+    if live_filter == 'LIVE' and not is_live:
+        return False
+    if comp_filter == 'ALBUMS' and is_comp:
+        return False
+    if comp_filter == 'HITS' and not is_comp:
+        return False
+    return True
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -201,9 +227,10 @@ with tab_similar:
             artist_albums = lookup[lookup['artist_name'] == selected_artist]
             album_options = {row['album_name']: aid
                              for aid, row in artist_albums.iterrows()
-                             if is_queryable(aid)}
+                             if is_queryable(aid) and passes_content_filters(aid)}
             if not album_options:
-                st.info("No recommendable albums under current weights. Raise more channels.")
+                st.info("No albums match the current weights and content filters. "
+                        "Raise more channels or relax the Live/Hits faders.")
             else:
                 selected_album_name = st.selectbox("Pick a Starting Album",
                                                    sorted(album_options.keys()))
@@ -240,8 +267,13 @@ with tab_similar:
                          comp_filter=st.session_state.get('comp_filter', 'BOTH'))
         active = "  ·  ".join(f"{BLOCK_LABELS[k].replace('<br>', ' ')} {weights[k]:.2f}"
                               for k in KNOB_BLOCKS if weights.get(k, 0) > 0)
+        if sec_types is not None:
+            filt = (f"FILTERS › {st.session_state.get('live_filter', 'BOTH')} · "
+                    f"{st.session_state.get('comp_filter', 'BOTH')}")
+        else:
+            filt = "FILTERS › OFF (no secondary-type data)"
         render_results_table(recs, "You Might Also Like",
-                             f"MIX › {active}", show_similarity=True)
+                             f"MIX › {active}   |   {filt}", show_similarity=True)
 
         # Per-block explanation (expandable, minimal)
         if recs is not None and not recs.empty and album_id in album_id_to_row:
@@ -254,7 +286,7 @@ with tab_similar:
                         sims = per_block_similarity(q_row, album_id_to_row[rid], blocks, ssq)
                         top_reasons = sorted(sims.items(), key=lambda x: -x[1])[:3]
                         reasons = '  '.join(
-                            f"<span style='color:var(--gold);'>{BLOCK_LABELS[n]}</span> "
+                            f"<span style='color:var(--gold);'>{BLOCK_LABELS.get(n, n.title())}</span> "
                             f"<span style='color:var(--dim);'>{int(v*100)}%</span>"
                             for n, v in top_reasons if v > 0
                         )
@@ -327,7 +359,10 @@ with tab_explore:
                 results = explore_search(
                     selected_tag_ids, country_id, year_range,
                     album_tags_df, album_meta_df, lookup, album_id_to_row,
-                    max_results=EXPLORE_RESULTS)
+                    max_results=EXPLORE_RESULTS,
+                    sec_types=sec_types,
+                    live_filter=st.session_state.get('live_filter', 'BOTH'),
+                    comp_filter=st.session_state.get('comp_filter', 'BOTH'))
 
             tags_str = ", ".join(selected_tags)
             filters = []

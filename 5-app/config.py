@@ -32,6 +32,7 @@ KNOB_BLOCKS = [k for k in BLOCK_FILES if k != 'ratings']
 
 BLOCK_LABELS = {
     'genre':        'Genre',
+    'ratings':      'Ratings',
     'record_label': 'Record<br>Label',
     'country':      'Country',
     'track_stats':  'Track<br>Stats',

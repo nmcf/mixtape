@@ -32,9 +32,13 @@ def load_blocks():
 @st.cache_resource
 def load_lookup():
     """Album-ID → (album_name, artist_name) lookup table."""
+    path = _find_parquet('mb_album_artists.parquet')
+    if not path:
+        st.error("mb_album_artists.parquet not found in data/ or data/raw/ — "
+                 "run 1-data/01-postgres-to-parquet.ipynb to generate it.")
+        st.stop()
     return (
-        pd.read_parquet(os.path.join(DATA_DIR, 'mb_album_artists.parquet'),
-                        columns=['album_id', 'album_name', 'artist_name'])
+        pd.read_parquet(path, columns=['album_id', 'album_name', 'artist_name'])
         .drop_duplicates(subset='album_id')
         .set_index('album_id')
     )
@@ -335,11 +339,13 @@ def smart_auto_tune(scores, user_prefs):
 
 def explore_search(selected_tag_ids, country_id, year_range,
                    album_tags_df, album_meta_df, lookup, album_id_to_row,
-                   max_results=EXPLORE_RESULTS):
+                   max_results=EXPLORE_RESULTS,
+                   sec_types=None, live_filter='BOTH', comp_filter='BOTH'):
     """Find albums matching selected genre tags, optionally filtered by country and year.
 
     Scoring: for each album, score = sum of tag_count for all matching tags.
     Higher = better match (more of the requested tags, with higher community agreement).
+    Honours the Live Albums / Greatest Hits faders via sec_types, same as recommend().
     """
     if not selected_tag_ids:
         return None
@@ -363,6 +369,19 @@ def explore_search(selected_tag_ids, country_id, year_range,
     scored = scored[scored['album_id'].isin(recommendable)]
     if scored.empty:
         return None
+
+    # Step 2b: content filters — same semantics as recommend()
+    if sec_types is not None:
+        if live_filter == 'STUDIO':
+            scored = scored[~scored['album_id'].isin(sec_types['live'])]
+        elif live_filter == 'LIVE':
+            scored = scored[scored['album_id'].isin(sec_types['live'])]
+        if comp_filter == 'ALBUMS':
+            scored = scored[~scored['album_id'].isin(sec_types['comp'])]
+        elif comp_filter == 'HITS':
+            scored = scored[scored['album_id'].isin(sec_types['comp'])]
+        if scored.empty:
+            return None
 
     # Relevance: how much of the album's TOTAL tagging is the selected genres.
     # This stops mega-popular albums (tagged with everything at count 1) from

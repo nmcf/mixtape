@@ -48,7 +48,7 @@ pip install -r requirements.txt
 streamlit run 5-app/app.py
 ```
 
-The app opens at **http://localhost:8505** (port set in `5-app/.streamlit/config.toml`). Start typing an artist in the live search box to pick one, choose a starting album, and get recommendations from the v3 feature set. You can reweight features (genre, record label, country, track stats, era, and Last.fm popularity) in real time using guitar-amp-style **knobs** (0–11) in the sidebar. Ratings weight auto-syncs to the Popularity dial. Two mixing-console-style **vertical faders** — **Live Albums** (Live/Both/Studio) and **Greatest Hits** (Hits/Both/Albums) — narrow results by MusicBrainz release type.
+The app opens at **http://localhost:8505** (port set in `5-app/.streamlit/config.toml`). Start typing an artist in the live search box to pick one, choose a starting album, and get recommendations from the v3 feature set. You can reweight features (genre, record label, country, track stats, era, and Last.fm popularity) in real time using guitar-amp-style **knobs** (0–11) in the sidebar. Ratings weight auto-syncs to the Popularity dial. Two mixing-console-style **vertical faders** — **Live Albums** (Live/Both/Studio) and **Greatest Hits** (Hits/Both/Albums) — filter by MusicBrainz release type across the album picker, the recommendations, and the Explore results.
 
 No database connection is needed — the Parquet files and feature matrices in `data/` are all that's required. (The trained `.joblib` models used by the older comparison apps are not committed; retrain them with the v2/v3 notebooks if you want those apps. Older monolithic app files are archived in `5-app/archive/`.)
 

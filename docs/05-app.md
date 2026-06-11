@@ -105,7 +105,7 @@ Clicking a result seeds it into the Find Similar tab for cosine recommendations.
 ## Content filters
 
 Two mixing-console-style **vertical faders** (custom component, `5-app/fader_component/`) below
-the knobs filter results by MusicBrainz release-group **secondary type**.
+the knobs filter by MusicBrainz release-group **secondary type**.
 
 | Fader | Options | Keeps |
 |-------|---------|-------|
@@ -113,6 +113,19 @@ the knobs filter results by MusicBrainz release-group **secondary type**.
 | **Greatest Hits** | ALBUMS / BOTH / HITS | ALBUMS = exclude compilations; HITS = compilations only |
 
 Both default to the exclude-unwanted position (STUDIO / ALBUMS).
+
+The faders apply to **all three album surfaces**:
+
+1. **Album picker** ("Pick a Starting Album") — `passes_content_filters()` in `app.py` hides
+   non-matching albums from the dropdown (e.g. at STUDIO, an artist's date-titled concert
+   recordings disappear from the list).
+2. **Find Similar results** — `engine.recommend()` skips non-matching candidates.
+3. **Explore results** — `engine.explore_search()` applies the same exclusion before ranking.
+
+The active filter state is echoed in the results caption
+(`FILTERS › STUDIO · ALBUMS`) so a stale or missing filter is visible at a glance. If
+`mb_album_secondary_type.parquet` is missing, a sidebar warning is shown and the caption reads
+`FILTERS › OFF` — the faders render but have no effect.
 
 ## Data loaded at startup
 
@@ -146,7 +159,7 @@ extra tabs/filters need a few raw extracts:
 | **Explore** (optional country/decade filters) | `data/raw/mb_area.parquet`, `data/mb_album_country.parquet`, `data/mb_release_year.parquet` | `1-data/07-extract-tag-area.ipynb` |
 
 If a file is missing the feature **degrades gracefully** — Explore shows a hint, the Popularity
-knob disappears, content filters become no-ops — rather than crashing.
+knob disappears, content filters become no-ops (with a sidebar warning) — rather than crashing.
 
 ## Theme
 

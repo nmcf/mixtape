@@ -156,3 +156,92 @@ immediately if the scraper or matching step changes.
 | Reduce/collapse correlated Last.fm columns | Medium | Medium — cleaner feature weighting |
 | Fuzzy-match fallback for unmatched Last.fm albums | Medium | Medium — ~1–3% more coverage |
 | Sensitivity check on Bayesian prior `C` | Low | Low — confidence that `5` is appropriate |
+
+---
+
+## App integration — table dependencies and known issues
+
+> **Status: errors observed in Explore and Find Similar tabs** (2026-06-11).
+
+### Parquet files the feature pipeline writes and the app reads
+
+| File | Written by | Read by app | Path |
+|---|---|---|---|
+| `mb_album_artists.parquet` | `1-data/01-postgres-to-parquet.ipynb` | `engine.load_lookup()` (direct path) | `data/` |
+| `mb_album_country.parquet` | `1-data/03-feature-country-import.ipynb` | `engine.load_explore_data()` via `_find_parquet` | `data/` |
+| `mb_album_tag.parquet` | `1-data/07-extract-tag-area.ipynb` | `engine.load_explore_data()` via `_find_parquet` | `data/` |
+| `mb_tag.parquet` | `1-data/07-extract-tag-area.ipynb` | `engine.load_explore_data()` via `_find_parquet` | `data/raw/` |
+| `mb_area.parquet` | `1-data/07-extract-tag-area.ipynb` | `engine.load_explore_data()` via `_find_parquet` | `data/raw/` |
+| `mb_album_secondary_type.parquet` | `1-data/06-extract-secondary-type.ipynb` | `engine.load_secondary_types()` via `_find_parquet` | `data/raw/` |
+| `album_ratings_matrix.npz` | `3-features/04-feature-ratings.ipynb` | `engine.load_blocks()` as `ratings` block | `data/features/` |
+| `album_lastfm_popularity_matrix.npz` | `3-features/13-feature-lastfm-popularity.ipynb` | `engine.load_blocks()` as `popularity` block | `data/features/` |
+
+### What moved and why
+
+As part of commit `e8c6318` (App cleanup + data consolidation):
+
+- `mb_tag.parquet`, `mb_area.parquet`, `mb_album_secondary_type.parquet` were moved from `data/` to `data/raw/`. The extraction notebooks `06` and `07` were updated to write to `../data/raw/`. The app was updated to use `_find_parquet()` which searches `data/raw/` first, then `data/`.
+
+- **Album year data** moved: `mb_album.parquet` no longer has a `begin_date_year` column. Year now lives in `mb_album_country.album_year`. `engine.load_explore_data()` was updated to read from there. The Explore year slider now works where it previously silently failed.
+
+### Root cause of current app errors
+
+#### Bug 1 — Ratings index misalignment (affects Find Similar)
+
+`04-feature-ratings.ipynb` loads `mb_album_ratings.parquet` into a DataFrame with a `RangeIndex` (0, 1, 2 …). The album_id is stored as a *column*, not the index. When the export cell calls:
+
+```python
+aligned_album_ratings = album_features.reindex(unique_album_ids)['weighted_score_norm'].fillna(0.0).values
+```
+
+`unique_album_ids` contains actual MusicBrainz album IDs (e.g., 4, 11, 37119 …). Pandas interprets these as positional row numbers against the RangeIndex — so album_id 4 gets row 4 of the ratings table, which is a completely different album. Ratings are assigned to the wrong albums across the entire matrix.
+
+The same bug affects `artist_features.reindex(unique_artist_ids)` in the artist-ratings export.
+
+**Fix required:** set the album_id column as the index before reindexing:
+
+```python
+aligned_album_ratings = (
+    album_features.set_index('album_id')
+    .reindex(unique_album_ids)['weighted_score_norm']
+    .fillna(0.0).values
+)
+```
+
+Same fix applies to `artist_features.set_index('artist_id')`.
+
+The bug is pre-existing (the matrix on disk is already misaligned). It produces wrong ratings signal but not a Python exception — the app runs, but ratings-based recommendations are incorrect. The `album_ratings_matrix.npz` must be regenerated after the fix.
+
+#### Bug 2 — `load_lookup()` uses a hardcoded path (fragile)
+
+`engine.load_lookup()` reads:
+
+```python
+pd.read_parquet(os.path.join(DATA_DIR, 'mb_album_artists.parquet'), ...)
+```
+
+Unlike other parquets it does not go through `_find_parquet`. If `mb_album_artists.parquet` is ever moved to `data/raw/` (following the same pattern as `mb_tag.parquet`), `load_lookup()` would raise a `FileNotFoundError` and crash both tabs (lookup is used by both Find Similar and Explore results rendering).
+
+**Fix:** wrap in `_find_parquet('mb_album_artists.parquet')` with a fallback error message.
+
+#### Bug 3 — ~~`mb_album_tag.parquet` dual-location risk~~ (retracted)
+
+On closer inspection, `07-extract-tag-area.ipynb` writes only `mb_tag.parquet` and `mb_area.parquet` to `data/raw/`. `mb_album_tag.parquet` is written by `01-postgres-to-parquet.ipynb` to `data/` and is read from there by the EDA and feature notebooks as well as the app (via `_find_parquet` fallthrough). There is no duplicate-location risk. No change needed.
+
+### NPZ files regenerated
+
+> **Status: done** (2026-06-11). Both matrices regenerated with the fixed logic.
+
+| Matrix | State on disk |
+|---|---|
+| `album_lastfm_popularity_matrix.npz` | 1.76M × 2, log1p + min-max scrobbles, 252,167 albums (14.3%), fuzzy pass recovered 236 |
+| `album_ratings_matrix.npz` | 1.76M × 1, correct index, merged direct (7.2%) + artist fallback (12.2%) = 341,083 albums (19.4%) |
+
+The column-count change (4→2) is transparent to the app — `weighted_cosine` handles any column count.
+
+### Content filter fixes (same session)
+
+The Live Albums / Greatest Hits faders previously only filtered Find Similar results. Now applied
+to all three surfaces: the album picker (`passes_content_filters()` in `app.py`), Find Similar
+(`engine.recommend`), and Explore (`engine.explore_search`). Filter state echoed in the results
+caption; sidebar warning when `mb_album_secondary_type.parquet` is missing.
