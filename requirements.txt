@@ -21,6 +21,7 @@ requests
 beautifulsoup4
 filelock
 openpyxl
+rapidfuzz  # fuzzy album name matching in 3-features/13-feature-lastfm-popularity.ipynb
 
 # Environment
 jupyterlab
