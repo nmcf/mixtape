@@ -1,56 +1,51 @@
-# Speaker Notes — Arsalan (Slides 6–7)
+# Speaker Notes — Arsalan (Slides 5–6)
 
-> **Template.** These slides are still placeholders in the deck. Fill in the `body` for slides 6
-> and 7 in `presentation/index.html` (aim for ~4 single-line bullets each — see
-> `presentation-style-guide.md`), then drop the "PLACEHOLDER SLIDE" tag for them. The suggestions
-> below are starting points — confirm the details against your notebooks before presenting.
+Talking points based on the current slide content. Bullets on the slides are the headlines;
+these notes are what to say around them.
 
 ---
 
-## Slide 6 — Last.fm Web Scraping
+## Slide 5 — Last.fm Web Scraping
 
-**Status:** placeholder.
-
-Suggested bullet directions (pick ~4):
-- Why Last.fm: MusicBrainz has metadata but not **popularity** — Last.fm has listener &
-  scrobble counts.
-- Scraped listener + scrobble counts for every **(artist, album)** pair in our album set.
-- **Parallel** scraper — multiple workers running at once to get through the volume.
-- **Resumable & safe** — file-locking prevents write clashes; re-runs skip rows already scraped.
-- Scale/result: ended up with ~**200k+ rows** of popularity data.
+**On slide:** MusicBrainz has no listener data · listener & scrobble counts at artist and album
+level · up to 4 parallel workers · fully resumable.
 
 Talking points:
-- Frame the gap: recommendations shouldn't only be "similar genre" — **how popular** an album is
-  matters too, and that data isn't in MusicBrainz.
-- Explain **scrobbles**: Last.fm counts every play as a "scrobble" — so scrobble count is total
-  plays across all users, while listener count is unique users who have played it. Both signal
-  different things: listeners = reach, scrobbles = loyalty/repeat listens.
-- Walk through the scraping approach (source pages, what fields you grabbed, rate limiting).
-- Highlight the engineering: making it **parallel and resumable** so a long scrape could be
-  paused/restarted and split across workers without duplicating work.
-- Mention data-quality gotchas (e.g. counts stored as comma-formatted strings, missing albums)
-  and that cleaning happens in the popularity feature step → slide 7.
+- Frame the gap: MusicBrainz has rich metadata but no listening data. How many people actually
+  listen to an album is a strong popularity signal that MusicBrainz simply doesn't have.
+- Explain **scrobbles**: Last.fm logs every play as a "scrobble" — so scrobble count is total
+  plays across all users, while listener count is unique users. Listeners = reach,
+  scrobbles = loyalty / repeat listens.
+- The catalog is large (~1.75M albums), so scraping one by one would take too long. We ran up to
+  **4 workers in parallel**, each covering a different slice of the album list at the same time.
+- Engineering detail worth mentioning: all workers write to the same shared file safely, and
+  each run rebuilds a done-set from what's already saved — so you can stop and restart without
+  re-scraping anything.
 
-*(Ref to confirm: `1-data/05-lastfm-scraper.ipynb`; output `data/lastfm_data.parquet`.)*
+*(Ref: `1-data/05-lastfm-scraper.ipynb`; output `data/lastfm_data.parquet`.)*
 
 ---
 
-## Slide 7 — Popularity Feature
+## Slide 6 — Popularity Feature
 
-**Status:** placeholder.
-
-Suggested bullet directions (pick ~4):
-- Turned raw Last.fm counts into a **normalized popularity feature** per album.
-- Cleaned the messy inputs (string → numeric, missing values).
-- Combined artist-level and album-level signals (listeners vs scrobbles).
-- How it slots into the model — its own weighted block the user can tune.
+**On slide:** Last.fm listener counts and MusicBrainz community ratings · scores weighted by
+confidence · no-rating albums inherit artist score · popular albums tend to be well-rated,
+both sync to the Popularity dial.
 
 Talking points:
-- Explain *why normalize*: raw counts span many orders of magnitude (power-law again) — likely a
-  log/scaled transform so a few megahits don't dominate.
-- What the final feature looks like (one value per album? a small block?) and how it aligns
-  row-for-row with the other feature matrices.
-- Tie back to the tagline: popularity is one of the knobs users can **tune** in the app.
+- Two complementary signals: **play counts from Last.fm** (~14% of albums covered) and
+  **star ratings from MusicBrainz** (~5% covered). Different sources, different angles on
+  the same idea of how well-regarded an album is.
+- Ratings are sparse — most albums have none at all. A raw average is unreliable here: one
+  5-star rating looks identical to 10,000. We use a **Bayesian formula** that weights the
+  score by how many votes it has. With our constant of 5, you need roughly 5 ratings before
+  the score carries half its weight — a single vote barely moves the needle.
+- For albums with no direct rating (~95%), we fall back to the **artist's rating as a proxy**.
+  Not perfect, but better than leaving the signal at zero.
+- The key insight from the EDA: **popular albums and well-rated albums are positively
+  correlated**. That's why the app syncs both signals to a single **Popularity dial** — one
+  control for "how much should fame and reputation influence my recommendations?"
 - Hand off to Nils (model).
 
-*(Ref to confirm: `3-features/13-feature-lastfm-popularity.ipynb`.)*
+*(Ref: `2-eda/03-EDA-popularity.ipynb`, `3-features/04-feature-ratings.ipynb`,
+`3-features/13-feature-lastfm-popularity.ipynb`.)*
