@@ -338,7 +338,7 @@
         <button class="btn" id="playBtn" title="Play / Pause">
           <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
         </button>
-        <button class="btn btn-record" title="Record">
+        <button class="btn btn-record" title="Create Mixtape" onclick="window.open('http://localhost:8505','_blank')">
           <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="6"/></svg>
         </button>
         <button class="btn" id="nextBtn" title="Next slide">
@@ -369,8 +369,8 @@
     { presenter: "NIALL",   title: "Genre Feature",         body: "<ul><li>Blended 3 tag sources &mdash; album, artist &amp; label (weighted <code>1.0</code> / <code>0.5</code> / <code>0.3</code>).</li><li>Label tags are noisy &mdash; only genre-coherent ones trusted.</li><li>Built a genre hierarchy: ~2.7k subgenres &rarr; ~20 parent families.</li><li>Together the sources reach ~68% coverage.</li></ul>" },
     { presenter: "NIALL",   title: "Feature Matrices",      body: "<ul><li>Each feature becomes a table &mdash; one row per album.</li><li>They capture different angles: genre, popularity &amp; more.</li><li>Every feature is built the same way, so they all line up.</li><li>These tables are the building blocks of our recommender.</li></ul>" },
 
-    { presenter: "ARSALAN", title: "Last.fm Web Scraping", placeholder: true,  body: "Collecting listening and tag data by scraping Last.fm — pipeline, rate limiting, and data cleaning." },
-    { presenter: "ARSALAN", title: "Popularity Feature", placeholder: true,    body: "Turning play counts and listener stats into a normalized popularity feature for the model." },
+    { presenter: "ARSALAN", title: "Last.fm Web Scraping",  body: "<ul><li>MusicBrainz has no listener data &mdash; scraped Last.fm to fill the gap.</li><li>Scraped listener &amp; scrobble counts at both artist and album level.</li><li>Up to 4 parallel workers, all writing safely to one shared file.</li><li>Fully resumable &mdash; each run picks up where it left off, no double-scraping.</li></ul>" },
+    { presenter: "ARSALAN", title: "Popularity Feature",  body: "<ul><li>Last.fm listener counts and MusicBrainz community ratings.</li><li>Most albums have no rating &mdash; scores are weighted by confidence.</li><li>Albums with no direct rating inherit their artist&rsquo;s score to fill the gap.</li><li>Popular albums tend to be well-rated &mdash; both signals sync to the Popularity dial.</li></ul>" },
 
     { presenter: "NILS",    title: "KNN Model",    body: "<ul><li>Every album is a point in feature space &mdash; recommended are its nearest neighbours.</li><li>Cosine similarity: compares direction not magnitude, ideal for sparse data.</li><li>~1M albums in the set, brute-force search &mdash; no approximation needed.</li><li>First sanity check: queries result in ok results.</li></ul>" },
     { presenter: "NILS",    title: "Model Tuning", body: "<ul><li>Each feature block has a weight &mdash; tuning finds the right balance across genre, era, label &amp; more.</li><li>Evaluated against Last.fm ground truth: Hit Rate @10 across ~2k seed albums.</li><li>Finding: the tiny label type block was the single biggest lever.</li><li>V1 &rarr; V5 progression: HR @10 from 6% &rarr; 8% (~30%); best weights saved.</li></ul>" },

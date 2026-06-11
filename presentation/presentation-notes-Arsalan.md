@@ -22,6 +22,9 @@ Suggested bullet directions (pick ~4):
 Talking points:
 - Frame the gap: recommendations shouldn't only be "similar genre" — **how popular** an album is
   matters too, and that data isn't in MusicBrainz.
+- Explain **scrobbles**: Last.fm counts every play as a "scrobble" — so scrobble count is total
+  plays across all users, while listener count is unique users who have played it. Both signal
+  different things: listeners = reach, scrobbles = loyalty/repeat listens.
 - Walk through the scraping approach (source pages, what fields you grabbed, rate limiting).
 - Highlight the engineering: making it **parallel and resumable** so a long scrape could be
   paused/restarted and split across workers without duplicating work.
