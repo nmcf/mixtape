@@ -1,6 +1,6 @@
 # Rebuilding the pipeline
 
-How to regenerate the data, feature matrices, and run the app from scratch. The current app (`app_v3_weighted.py`) reads raw feature matrices directly — no trained model required.
+How to regenerate the data, feature matrices, and run the app from scratch. The current app (`5-app/app.py`) reads raw feature matrices directly — no trained model required.
 
 All parquets are committed to the repo. If you just want to run the app, skip straight to [Step 11](#step-11--run-the-app) — the feature matrices in `data/features/` are also committed.
 
@@ -91,11 +91,15 @@ Expected: `(1758488, 12)`, ~19.3 M non-zero entries.
 
 ---
 
-## Step 10 — Build era matrix
+## Step 10 — Build temporal matrix
 
-Run all cells in `3-features/07-feature-era.ipynb` → writes `data/features/album_era_matrix.npz` and `data/features/album_era.parquet`.
+Run all cells in `3-features/14-feature-temporal.ipynb` → writes:
+- `data/features/album_era.parquet` — per-album best_year / era_bin (audit use)
+- `data/features/album_era_matrix.npz` — era one-hot (10 cols)
+- `data/features/album_temporal_matrix.npz` — era one-hot + continuous year (11 cols; this is what the app loads)
+- `data/features/temporal_year_scaler.json` — year_min / year_max scaler params
 
-Expected: `(1758488, 12)`, ~97.9% coverage.
+Expected: temporal matrix `(1758488, 11)`, ~97.9% era coverage. The year column uses `YEAR_WEIGHT=0.3` (analytically determined — era-boundary smoothing only; see `2-eda/04-EDA-year.ipynb`).
 
 ---
 
@@ -104,7 +108,7 @@ Expected: `(1758488, 12)`, ~97.9% coverage.
 From the project root:
 
 ```bash
-streamlit run 5-app/app_v3_weighted.py
+streamlit run 5-app/app.py
 ```
 
-The app opens at **http://localhost:8501**. It loads the six feature matrices (genre, record label, ratings, country, track stats, era) directly — no trained model required. Sidebar **knobs** (0–11, guitar-amp style) set a weight per feature block; two vertical **faders** filter results by MusicBrainz release type (Live Albums, Greatest Hits).
+The app opens at **http://localhost:8501**. It loads the six feature matrices (genre, record label, ratings, country, track stats, temporal) directly — no trained model required. Sidebar **knobs** (0–11, guitar-amp style) set a weight per feature block; two vertical **faders** filter results by MusicBrainz release type (Live Albums, Greatest Hits).

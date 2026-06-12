@@ -14,16 +14,18 @@ duckdb  # only needed to re-import data from Postgres (1-EDA/01-postgres-to-parq
 
 # App
 streamlit
-streamlit-searchbox
+streamlit-searchbox  # reactive artist typeahead in 5-app/app.py
 
 # Scraping
 requests
 beautifulsoup4
 filelock
 openpyxl
+rapidfuzz  # fuzzy album name matching in 3-features/13-feature-lastfm-popularity.ipynb
 
 # Environment
 jupyterlab
 ipykernel
 pyarrow
 python-dotenv
+ipywidgets

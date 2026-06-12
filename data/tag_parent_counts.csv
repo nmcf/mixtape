@@ -1,0 +1,363 @@
+parent,n_children,total_child_albums
+rock,53,96198
+metal,40,70404
+indie,7,43491
+alternative,24,36548
+synth,7,22487
+folk,20,20407
+jazz,27,20250
+punk,23,19245
+contemporary,15,18987
+psychedelic,7,18010
+progressive,20,17478
+ambient,16,16399
+blues,25,14788
+pop,30,13933
+wave,5,10234
+hardcore,15,9754
+country,30,9139
+house,15,8991
+garage,6,8306
+classical,21,7927
+stoner,3,7548
+classic,7,7067
+music,39,6977
+improvisation,1,6333
+soft,2,5867
+experimental,11,5795
+songwriter,3,5629
+noise,9,5420
+band,8,5100
+dark,2,4975
+instrumental,10,4808
+black metal,10,4589
+death metal,7,4537
+soul,20,4515
+symphonic,3,4210
+space,4,3917
+industrial,12,3770
+rap,17,3605
+dance,15,3529
+bop,2,3491
+latin,8,3487
+bass,9,3486
+dream,2,3415
+berlin,1,3306
+avant-garde,4,3241
+future,7,3235
+hip hop,12,3004
+reggae,5,2870
+thrash,1,2852
+gothic,5,2721
+techno,7,2695
+smooth,2,2593
+harsh noise,1,2591
+cover,39,2462
+hard,2,2389
+sludge,2,2228
+trance,10,2183
+fusion,5,2113
+electro,9,2041
+cool,1,2002
+beat,9,1961
+acid,3,1900
+disco,9,1889
+jazzthing,12,1677
+album,7,1629
+beats,2,1622
+christmas,3,1619
+groove,3,1618
+chamber,4,1607
+underground,4,1603
+alternative/indie,1,1415
+vocal,6,1321
+contemporary pop,1,1296
+horror,2,1265
+chicago,4,1186
+traditional,7,1140
+psychedelia,3,1104
+minimal,5,1100
+funk,10,1094
+electronic,8,1042
+doom metal,6,997
+gangsta,1,960
+art,3,954
+psych,1,914
+piano,6,894
+chanson,4,868
+alternative pop,1,845
+christian,5,802
+grunge,2,800
+swing,6,754
+desert,2,749
+acoustic,7,713
+rhythmic,1,662
+baroque,2,654
+conscious,1,618
+heavy,2,588
+roots,1,555
+afro-cuban,1,543
+hip-hop,9,541
+glam,2,534
+emo,4,528
+glitch,3,527
+boogie,3,512
+vocalist,2,507
+west coast,2,503
+vaporwave,4,497
+new wave,1,493
+crossover,4,488
+electronica,5,473
+crust,3,453
+comedy,6,425
+goth,1,424
+ambient noise,1,380
+french,3,337
+drone,1,321
+ballad,2,311
+british,4,308
+celtic,4,306
+rockabilly,4,300
+anarcho,1,293
+abstract,1,290
+adult alternative pop,1,288
+irish,1,285
+prog,3,274
+brass,1,268
+american,6,267
+melodic,6,257
+neoclassical,4,254
+children's,1,251
+lo-fi,3,240
+spiritual,1,240
+bluegrass,2,237
+outsider,2,233
+artist,2,231
+modern,5,226
+worship,2,225
+opera,1,217
+hypnagogic,1,215
+jazz/soul,1,213
+metalcore,1,211
+lithuanian,8,209
+club,3,202
+garage rock,1,193
+progressive rock,1,193
+western,2,190
+twee,1,180
+political,2,180
+internet,1,176
+other,3,163
+thrash metal,3,159
+punk revival,2,157
+tribal,1,155
+ballads,1,154
+box,2,150
+poetry,4,143
+romantic,2,140
+drum and bass,3,139
+power metal,5,132
+ethereal,1,130
+bubblegum,3,117
+samba,4,117
+occult,1,117
+indian,1,112
+sludge metal,1,111
+minimalism,1,111
+world,1,110
+game,2,108
+r&b,3,108
+genre,3,105
+trap,3,105
+trad,1,102
+paris,1,101
+drill,2,97
+modal,1,95
+tropical,2,94
+vocals,4,90
+new orleans,4,90
+dubstep,2,90
+chill,2,89
+oldies,4,88
+americana,1,86
+cabaret,2,85
+laut.de,3,82
+easy listening,4,82
+heavy metal,3,78
+game music,1,78
+nature,2,78
+hiphop,2,77
+gospel,2,71
+winter,1,70
+adult alternative,2,70
+atmospheric,4,70
+funky,2,69
+dance hall,1,69
+british folk,1,69
+texas blues,2,68
+trova,1,67
+oi,1,66
+singer/songwriter,2,63
+early pop,1,61
+classic rock,1,61
+virtuoso,1,59
+electric blues,1,59
+britpop,1,58
+old school,1,57
+medieval,3,56
+arabic,3,56
+third wave ska,1,55
+rave,1,54
+lofi,1,53
+guitar,4,52
+hard rock,2,51
+plattentests.de,2,51
+rhythm & blues,1,49
+space rock,1,49
+japan,1,48
+jam,2,48
+r b,2,47
+general pop,1,46
+singer-songwriter,3,46
+synthwave,2,46
+free,1,45
+party,1,45
+new age,2,44
+nerdcore,1,44
+japanese,3,44
+français,2,44
+swedish,2,43
+italian,1,43
+breakbeat,1,42
+rollingstone.de,3,42
+psytrance,2,41
+cd,2,41
+composer,2,39
+traditional country,1,39
+fantasy,3,38
+trumpet,1,38
+death-metal,2,37
+epic,1,35
+concerto,2,35
+neo-classical,1,34
+rock & roll,1,32
+religious,2,31
+alternative country,1,31
+score,1,31
+urban,1,31
+ghetto,1,30
+adult contemporary,1,30
+flamenco,2,30
+death,2,30
+aussie,1,30
+musikexpress.de,2,30
+future bass,1,29
+acoustic blues,1,29
+russian,2,29
+electro-pop,1,28
+australian,2,28
+breaks,1,28
+80s,1,27
+general alternative,1,27
+organ,1,27
+schlager,2,26
+ethnic,1,26
+instrumental rock,1,26
+chanson française,1,26
+pop-rock,1,26
+persian,1,26
+german,1,25
+fixme,1,25
+american folk,1,25
+mod,1,25
+drumless,1,24
+love,1,24
+country blues,1,24
+vapor,1,24
+scottish,1,24
+contra,1,23
+nashville,1,23
+rock and roll,1,23
+rs 26–02,2,23
+british invasion,1,23
+chicago blues,2,23
+parody,1,22
+ai,1,22
+theme,1,22
+deep,1,22
+honky tonk,2,21
+me 26–03,2,21
+children,1,21
+dance music,1,20
+cumbia,1,19
+unknown genre,1,19
+mainstream rock,1,19
+brill building,1,19
+footwork,1,19
+new york,1,19
+jungle,1,18
+orchestral,1,18
+hungarian,1,18
+ukrainian,1,18
+africa,1,18
+dragon ball,1,18
+based,1,18
+harpsichord,1,18
+motown,1,17
+scandinavian,1,17
+uplifting,1,17
+soft rock,1,17
+halloween,1,17
+world music,1,16
+african,1,16
+pop rock,1,16
+vaudeville,1,16
+ska,1,15
+soul/r&b,1,15
+cold,1,15
+eclectic,1,15
+progressive house,1,15
+lounge,1,15
+pop/rock,1,14
+mallsoft,1,14
+rhythm and blues,1,14
+hip-hop/rap,1,13
+salsa,1,13
+avcd,1,13
+teen pop,1,13
+soundtrack,1,13
+boogaloo,1,12
+doom,1,12
+vocal group,1,12
+gamelan,1,12
+space music,1,12
+middle eastern,1,12
+black-metal,1,12
+nashville sound,1,12
+bach,1,12
+folk rock,1,12
+acousmatic,1,11
+soprano,1,11
+phonk,1,11
+debut,1,11
+dancehall,1,11
+jewish,1,11
+modular,1,11
+hindustani classical,1,10
+español,1,10
+progressive folk,1,10
+free jazz,1,10
+brutal death metal,1,10
+brit pop,1,10
+weird,1,10
+microtonal,1,10
+rough guide,1,10
+compilation,1,10
+dnb,1,10
+maldita vecindad,1,10
+signalwave,1,10
+long title,1,10
+balkan,1,10
+itunes,1,10
+alternative rock,1,10
+celtic folk,1,10

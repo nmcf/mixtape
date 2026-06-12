@@ -16,6 +16,11 @@ data/model/
 data/model_v2/
 data/model_v3/
 
+# v1 feature matrices — superseded by album_genre_matrix and album_record_label_matrix
+data/features/album_tags_matrix.npz
+data/features/album_labels_matrix.npz
+data/features/album_types_matrix.npz
+
 # Secrets
 .env
 .venv
@@ -25,3 +30,5 @@ data/model_v3/
 # Ignore local AI environment artifacts
 .claude/
 data/model*/*.joblib
+__pycache__/
+*.pyc

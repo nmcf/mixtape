@@ -72,6 +72,37 @@ This is a high-value doc — it captures the reasoning behind the recommended ro
 
 ---
 
+---
+
+## Committed matrices pending review
+
+These five matrices exist in `data/features/` and are built by notebooks already placed in
+`3-features/`, but neither the assembly notebook nor the weighted app currently loads them.
+They all originate from the same contributor/sql_features branch commit (`c75d946`,
+author niboDS, "feat: contributor feature matrices, V3 model, and updated comparison app").
+
+Each needs an evaluation decision before being added to the app or discarded.
+
+| File | Producing notebook | Shape | What it encodes |
+|---|---|---|---|
+| `album_role_family_matrix.npz` | `3-features/09-feature-contributors.ipynb` | 1,008,102 × 7 | Normalised role-family profile (performance, production, writing, etc.) with confidence weights |
+| `album_instrument_matrix.npz` | `3-features/09-feature-contributors.ipynb` | 1,008,102 × 591 | Normalised instrument profile (instruments appearing on ≥10 albums) with confidence weights |
+| `album_contributor_counts_matrix.npz` | `3-features/09-feature-contributors.ipynb` | 1,008,102 × 7 | Distinct contributor counts per role family, min-max scaled |
+| `album_year_matrix.npz` | `3-features/10-feature-year.ipynb` | TBD | Continuous imputed release year, min-max scaled; 98.9% coverage |
+| `album_tag_parent_matrix.npz` | `3-features/01b-feature-tag-hierarchy.ipynb` (12 archived) | TBD | Tag hierarchy parents — backs off niche tags to broader genre parents |
+
+**Notes:**
+- All three contributor matrices (`role_family`, `instrument`, `contributor_counts`) were built
+  against the old 1,008,102-album universe. They need to be rebuilt against the current
+  1,758,488-album universe before any evaluation.
+- `album_year_matrix` overlaps with `album_era_matrix` (era is binned year). The continuous
+  year signal could complement era — finer-grained similarity within a decade — but may also
+  add noise. Needs evaluation.
+- `album_tag_parent_matrix` could improve coverage for niche albums by backing off to broader
+  genre parents. The key question is whether it blurs useful genre distinctions.
+- `album_instrument_matrix` (591 cols) is the most expensive to add — evaluate whether
+  instrument similarity actually improves recommendation quality vs. adding query latency.
+
 ## Suggested execution order
 
 1. Move `next-steps-analysis.md` → `Planning/next-steps-v4.md` immediately (pure move, no changes needed)
