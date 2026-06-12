@@ -130,6 +130,38 @@ def load_lookup():
     )
 
 @st.cache_resource
+def load_similar_artists():
+    """Map artist name (lowercased) → set of similar artist names (lowercased)."""
+    path = os.path.join(DATA_DIR, 'lastfm_data.parquet')
+    if not os.path.exists(path):
+        return {}
+    df = pd.read_parquet(path, columns=['Artist', 'Similar_Artists'])
+    df = df.dropna(subset=['Similar_Artists'])
+    df = df[df['Similar_Artists'] != 'None Found']
+    mapping = {}
+    for _, row in df.iterrows():
+        artist = row['Artist'].strip().lower()
+        similars = {s.strip().lower() for s in row['Similar_Artists'].split(',')}
+        if artist not in mapping:
+            mapping[artist] = similars
+        else:
+            mapping[artist] |= similars
+    return mapping
+
+def boost_similar_artists(recs, seed_artist, similar_map, boost=5.0):
+    """Bump Match score for albums whose artist appears in seed's similar list."""
+    if recs is None or recs.empty or not seed_artist:
+        return recs
+    similars = similar_map.get(seed_artist.strip().lower(), set())
+    if not similars:
+        return recs
+    mask = recs['Artist'].str.lower().isin(similars)
+    recs = recs.copy()
+    recs.loc[mask, 'Match'] = (recs.loc[mask, 'Match'] + boost).clip(upper=100.0)
+    recs['Similar'] = mask
+    return recs.sort_values('Match', ascending=False).reset_index(drop=True)
+
+@st.cache_resource
 def load_flag_ids(filename):
     """Set of album_ids flagged with a given MusicBrainz secondary type.
     Exported by the matching queries/*_flag_duckdb.sql — an exact schema
@@ -260,6 +292,7 @@ st.title("Mixtape — Dial in Your Sound")
 
 blocks, album_ids, album_id_to_row, ssq = load_blocks()
 lookup = load_lookup()
+similar_map = load_similar_artists()
 live_ids = load_flag_ids('mb_album_live_flag.parquet')
 compilation_ids = load_flag_ids('mb_album_compilation_flag.parquet')
 
@@ -388,6 +421,7 @@ if selected_artist:
                 if recs is not None and not recs.empty:
                     recs = filter_by_flag(recs, live_mode, live_ids, 'Live')
                     recs = filter_by_flag(recs, hits_mode, compilation_ids, 'Hits')
+                    recs = boost_similar_artists(recs, selected_artist, similar_map)
 
                 if recs is None or recs.empty:
                     st.info("No recommendations available for this album.")
@@ -398,14 +432,20 @@ if selected_artist:
                         for k in KNOB_BLOCKS if weights[k] > 0
                     )
                     st.caption(f"EQ — {active}")
+                    show_cols = ['Album', 'Artist', 'Match']
+                    col_config = {
+                        'Album':  st.column_config.TextColumn(width='medium'),
+                        'Artist': st.column_config.TextColumn(width='medium'),
+                        'Match':  st.column_config.NumberColumn(width=35, format='%.1f%%'),
+                    }
+                    if 'Similar' in recs.columns:
+                        show_cols.append('Similar')
+                        col_config['Similar'] = st.column_config.CheckboxColumn(
+                            'Similar Artist', width=80,
+                            help='Last.fm lists this artist as similar to your search'
+                        )
                     st.dataframe(
-                        recs[['Album', 'Artist', 'Match']],
+                        recs[show_cols],
                         use_container_width=True, hide_index=True,
-                        column_config={
-                            'Album':  st.column_config.TextColumn(width='medium'),
-                            'Artist': st.column_config.TextColumn(width='medium'),
-                            'Match':  st.column_config.NumberColumn(
-                                width=35, format='%.1f%%'
-                            ),
-                        },
+                        column_config=col_config,
                     )
