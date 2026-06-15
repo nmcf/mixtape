@@ -1,0 +1,402 @@
+child,parent,child_albums,parent_albums
+pop rock,rock,33291,268011
+indie rock,indie,30864,5315
+alternative rock,rock,29800,2112
+hard rock,rock,19450,268011
+black metal,metal,17852,25443
+heavy metal,metal,17852,25443
+psychedelic rock,psychedelic,16378,8770
+dark ambient,ambient,14265,58832
+death metal,metal,13714,25443
+rock and roll,rock,10193,268011
+blues rock,blues,9815,23138
+post-rock,rock,9755,268011
+indie pop,indie,9295,5315
+post-punk,punk,8259,33960
+doom metal,metal,8234,25443
+progressive rock,progressive,7374,3066
+art rock,rock,6446,268011
+free jazz,jazz,6232,93585
+country rock,country,5448,18536
+progressive metal,progressive,5368,3066
+modern classical,classical,5293,54684
+punk rock,punk,4917,33960
+j-pop,pop,4596,119598
+pop/rock,rock,4548,268011
+jazz rock,jazz,4227,93585
+jazz-funk,jazz,4027,93585
+power pop,pop,3749,119598
+pop punk,punk,3675,33960
+post-hardcore,hardcore,3038,945
+deep house,house,3021,9629
+power metal,metal,2994,25443
+soul jazz,jazz,2845,93585
+indie folk,indie,2701,5315
+hardcore punk,hardcore,2691,945
+instrumental hip hop,instrumental,2639,12365
+experimental rock,experimental,2544,73239
+post-metal,metal,2498,25443
+dance-pop,dance,2396,3864
+experimental electronic,experimental,2357,73239
+noise rock,noise,2309,20792
+rock & roll,rock,2194,268011
+math rock,rock,2184,268011
+tech house,house,2067,9629
+harsh noise,noise,2007,20792
+alternative metal,alternative,1919,2112
+southern rock,rock,1786,268011
+euro house,house,1743,9629
+progressive trance,trance,1679,3066
+nu metal,metal,1487,25443
+hardcore hip hop,hardcore,1457,945
+speed metal,metal,1441,25443
+electric blues,blues,1398,23138
+progressive house,house,1336,3066
+country blues,country,1334,18536
+folk metal,metal,1296,25443
+arena rock,rock,1269,268011
+instrumental rock,instrumental,1182,12365
+alternative pop,alternative,1121,2112
+art pop,pop,1093,119598
+happy hardcore,hardcore,962,945
+goa trance,trance,939,5094
+witch house,house,872,9629
+noise pop,noise,793,20792
+psychedelic pop,psychedelic,774,8770
+city pop,pop,769,119598
+melodic hardcore,hardcore,718,945
+alternative hip hop,alternative,718,2112
+hard trance,trance,701,5094
+experimental hip hop,experimental,692,73239
+viking metal,metal,692,25443
+country pop,country,629,18536
+gypsy jazz,jazz,623,93585
+delta blues,blues,616,23138
+psychedelic folk,psychedelic,615,8770
+alternative folk,alternative,608,2112
+ska punk,punk,608,33960
+k-pop,pop,599,119598
+nu jazz,jazz,561,93585
+bedroom pop,pop,556,119598
+progressive electronic,progressive,541,3066
+funk metal,metal,540,25443
+classical crossover,classical,528,54684
+j-rock,rock,519,268011
+texas blues,blues,510,23138
+acid house,house,502,9629
+early pop,pop,498,119598
+alternative and punk,alternative,482,2112
+indian classical,classical,476,54684
+ambient techno,ambient,464,58832
+alternative country,alternative,437,2112
+surf rock,rock,434,268011
+post rock,rock,416,268011
+jangle pop,pop,403,119598
+alternative dance,alternative,379,2112
+alternative r&b,alternative,377,2112
+instrumental pop,instrumental,372,12365
+rhythm & blues,blues,349,23138
+jump blues,blues,347,23138
+lovers rock,rock,345,268011
+pub rock,rock,344,268011
+skate punk,punk,341,33960
+space ambient,ambient,338,58832
+rock/pop,rock,334,268011
+ambient pop,ambient,334,58832
+psy-trance,trance,330,5094
+country folk,country,326,18536
+dance-rock,dance,312,3864
+glam metal,metal,305,25443
+instrumental jazz,instrumental,298,12365
+jazz rap,jazz,297,93585
+jazz and blues,blues,291,23138
+rhythm and blues,blues,285,23138
+jazz pop,jazz,284,93585
+am pop,pop,282,119598
+louisiana blues,blues,281,23138
+progressive pop,progressive,279,3066
+tribal ambient,ambient,278,58832
+art punk,punk,278,33960
+heartland rock,rock,276,268011
+jazz-rock,jazz,265,93585
+rock pop,rock,260,268011
+ritual ambient,ambient,252,58832
+progressive folk,progressive,251,3066
+hard house,house,251,9629
+rap rock,rock,246,268011
+teen pop,pop,244,119598
+dark jazz,jazz,234,93585
+blues-rock,blues,231,23138
+western classical,classical,230,54684
+romantic classical,classical,229,54684
+hip house,house,226,9629
+punk revival,punk,224,33960
+digital hardcore,hardcore,223,945
+prog rock,rock,222,268011
+post-classical,classical,208,54684
+classical period,classical,204,54684
+progressive bluegrass,progressive,202,3066
+club/dance,dance,201,3864
+soul-jazz,jazz,195,93585
+sophisti-pop,pop,194,119598
+slacker rock,rock,194,268011
+hardcore techno,hardcore,192,945
+dance-punk,dance,190,3864
+hardcore rap,hardcore,190,945
+classic country,country,189,18536
+street punk,punk,188,33960
+progressive country,country,185,3066
+country-pop,country,185,18536
+alternative punk,alternative,183,2112
+instrumental surf,instrumental,183,12365
+power noise,noise,183,20792
+sunshine pop,pop,177,119598
+rap metal,metal,172,25443
+alternative vaporwave,alternative,169,2112
+proto-punk,punk,169,33960
+classical music,classical,161,54684
+pop and chart,pop,153,119598
+country-rock,country,148,18536
+punk-pop,punk,145,33960
+rap-metal,metal,145,25443
+pop-metal,metal,142,25443
+italo dance,dance,139,3864
+uk hardcore,hardcore,139,945
+outlaw country,country,138,18536
+war metal,metal,133,25443
+black ambient,ambient,132,58832
+trop rock,rock,129,268011
+college rock,rock,129,268011
+psychedelic soul,psychedelic,126,8770
+swamp pop,pop,125,119598
+hair metal,metal,122,25443
+alt rock,rock,122,268011
+brit pop,pop,121,119598
+punk blues,blues,115,23138
+ambient dub,ambient,114,58832
+dance pop,dance,113,3864
+tech trance,trance,109,5094
+yacht rock,rock,109,268011
+country gospel,country,106,18536
+alternative rap,alternative,102,2112
+post punk,punk,101,33960
+pop metal,metal,94,25443
+soul blues,blues,93,23138
+jazz instrument,jazz,91,93585
+prog-rock,rock,90,268011
+classical box set,classical,87,54684
+neo-traditionalist country,country,87,18536
+punk metal,metal,85,25443
+piedmont blues,blues,83,23138
+alt-country,country,83,18536
+chinese classical,classical,82,54684
+ambient house,ambient,82,58832
+persian classical,classical,81,54684
+general rock,rock,80,268011
+regional blues,blues,80,23138
+gothic country,country,76,18536
+anatolian rock,rock,74,268011
+club-house,house,72,9629
+math pop,pop,71,119598
+rap-rock,rock,69,268011
+progressive death metal,progressive,68,3066
+rock roll,rock,66,268011
+ska-punk,punk,64,33960
+neo-classical,classical,63,54684
+rhythm blues,blues,62,23138
+southern metal,metal,61,25443
+lo-fi house,house,60,9629
+black noise,noise,59,20792
+c-pop,pop,59,119598
+mainstream rock,rock,58,268011
+andalusian classical,classical,57,54684
+bass house,house,56,9629
+surf punk,punk,56,33960
+jazz blues,blues,56,23138
+cyber metal,metal,55,25443
+pop / rock / metal,metal,54,25443
+blues/rock,blues,53,23138
+ethio-jazz,jazz,53,93585
+country soul,country,51,18536
+general pop,pop,51,119598
+slow rock,rock,51,268011
+surf instrumental,instrumental,50,12365
+hindustani classical,classical,50,54684
+swamp rock,rock,50,268011
+cape jazz,jazz,49,93585
+other classical,classical,47,54684
+experimental big band,experimental,46,73239
+new jazz,jazz,45,93585
+gypsy punk,punk,45,33960
+alternative & punk,alternative,45,2112
+nü metal,metal,45,25443
+indie punk,indie,44,5315
+circus metal,metal,43,25443
+nawak metal,metal,43,25443
+folk / world / country,country,43,18536
+hardcore breaks,hardcore,42,945
+alt-rock,rock,40,268011
+asian rock,rock,40,268011
+geek rock,rock,39,268011
+afro house,house,38,9629
+trap metal,metal,38,25443
+raw punk,punk,37,33960
+detroit rock,rock,37,268011
+jazz funk,jazz,36,93585
+rock en espanol,rock,35,268011
+folk/country,country,34,18536
+psychedelic trance,trance,33,8770
+indie surf,indie,33,5315
+adult alternative,alternative,33,2112
+dance and house,dance,33,3864
+wtf metal,metal,33,25443
+experimental metal,experimental,32,73239
+texas country,country,32,18536
+black-metal,metal,32,25443
+l.a. punk,punk,31,33960
+alternative hip-hop,alternative,30,2112
+ethno jazz,jazz,30,93585
+experimental pop,experimental,30,73239
+goth metal,metal,29,25443
+beatdown hardcore,hardcore,29,945
+organic house,house,29,9629
+indo rock,rock,28,268011
+dance classics,dance,28,3864
+punk rap,punk,28,33960
+afro-jazz,jazz,27,93585
+big room house,house,27,9629
+identity rock,rock,27,268011
+crack rock steady,rock,27,268011
+modern country,country,27,18536
+ambient trance,ambient,27,58832
+alternative ccm,alternative,27,2112
+country rap,country,26,18536
+classical era,classical,26,54684
+alt metal,metal,25,25443
+turkish classical,classical,25,54684
+instrumental country,instrumental,25,12365
+cinematic classical,classical,25,54684
+euro pop,pop,25,119598
+vhs pop,pop,25,119598
+euro-pop,pop,24,119598
+pop-rock,rock,24,268011
+ambient drone,ambient,24,58832
+desert ambient,ambient,24,58832
+death-metal,metal,23,25443
+nude noise,noise,23,20792
+noise-rock,noise,23,20792
+rock n roll,rock,23,268011
+vocal trance,trance,23,5094
+general country,country,22,18536
+sleaze rock,rock,22,268011
+euro-dance,dance,22,3864
+classical guitar,classical,22,54684
+instrumental r&b,instrumental,22,12365
+experimental jazz,experimental,22,73239
+experimental hip-hop,experimental,22,73239
+hardcore hip-hop,hardcore,21,945
+general classical,classical,21,54684
+swamp blues,blues,21,23138
+blackened hardcore,hardcore,21,945
+latin alternative,alternative,20,2112
+drone ambient,ambient,20,58832
+alt. rock,rock,20,268011
+dance club,dance,20,3864
+alternative-rock,alternative,20,2112
+rock/blues,blues,20,23138
+nu-metal,metal,20,25443
+instrumental hip-hop,instrumental,20,12365
+progressive black metal,progressive,19,3066
+general alternative,alternative,19,2112
+metallic hardcore,hardcore,19,945
+trance metal,trance,19,5094
+experimental ambient,experimental,19,73239
+dream trance,trance,18,5094
+dance and club,dance,18,3864
+oriental metal,metal,18,25443
+ambient jazz,ambient,18,58832
+country / folk,country,18,18536
+hard dance,dance,18,3864
+experimental black metal,experimental,18,73239
+extreme metal,metal,18,25443
+j-trance,trance,18,5094
+general punk,punk,17,33960
+instrumental rockabilly,instrumental,17,12365
+jazz-pop,jazz,17,93585
+harmonica blues,blues,17,23138
+progressive power metal,progressive,17,3066
+jazz-rap,jazz,17,93585
+bro-country,country,16,18536
+operatic pop,pop,16,119598
+punk pop,punk,16,33960
+mainstream jazz,jazz,16,93585
+country swing,country,16,18536
+pop latino,pop,16,119598
+jazz/soul,jazz,16,93585
+rerip country,country,16,18536
+country boogie,country,16,18536
+country-folk,country,16,18536
+psychedelic funk,psychedelic,16,8770
+frat rock,rock,16,268011
+ambient noise,ambient,16,58832
+hip-house,house,15,9629
+heavy alternative,alternative,15,2112
+raga rock,rock,15,268011
+afro rock,rock,15,268011
+pop general,pop,15,119598
+urban blues,blues,15,23138
+dance hall,dance,15,3864
+early jazz,jazz,15,93585
+ecm style jazz,jazz,15,93585
+house / blues,blues,15,23138
+recession pop,pop,14,119598
+progressive jazz,progressive,14,3066
+pagan metal,metal,14,25443
+euro-trance,trance,14,5094
+alt-pop,pop,14,119598
+egg punk,punk,14,33960
+experimental folk,experimental,13,73239
+progressive psytrance,trance,13,3066
+blues/r&b,blues,13,23138
+r&b/rock,rock,13,268011
+kawaii metal,metal,13,25443
+dance and dj,dance,13,3864
+country comedy,country,13,18536
+new country,country,13,18536
+blackened noise,noise,12,20792
+nu-jazz,jazz,12,93585
+epic metal,metal,12,25443
+pop vocalists,pop,12,119598
+punk collectors series,punk,12,33960
+acid trance,trance,12,5094
+uptempo hardcore,hardcore,12,945
+rock against communism,rock,12,268011
+avant-pop,pop,12,119598
+italo house,house,12,9629
+classical pop,classical,12,54684
+alternative electronic,alternative,12,2112
+rock in opposition,rock,12,268011
+east coast blues,blues,12,23138
+country/rock,country,11,18536
+general jazz,jazz,11,93585
+indie dance,indie,11,5315
+alternative emo,alternative,11,2112
+ambient music,ambient,11,58832
+pop rnb dance,dance,11,3864
+alternative/indie,alternative,11,2112
+post-noise,noise,11,20792
+blues/jazz,blues,10,23138
+anarchist punk,punk,10,33960
+this is jazz,jazz,10,93585
+rock progresivo italiano,rock,10,268011
+dark metal,metal,10,25443
+lithuanian alternative,alternative,10,2112
+hippie punk,punk,10,33960
+viking rock,rock,10,268011
+heavy-metal,metal,10,25443
+progressive metalcore,progressive,10,3066
+heavy/power-metal,metal,10,25443
+cosmic country,country,10,18536
+pop idol,pop,10,119598
+death country,country,10,18536
+left-field pop,pop,10,119598

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: transparent;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    padding: 8px 4px 4px;
+  }
+  .panel {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 12px 8px 8px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px 6px;
+  }
+  .knob-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    user-select: none;
+  }
+  .knob-label {
+    color: #888;
+    font-size: 8.5px;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    text-align: center;
+    line-height: 1.2;
+  }
+  .knob-value {
+    color: #e8c84a;
+    font-size: 11px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .knob-value.off { color: #444; }
+  .knob-value.max { color: #e8c84a; text-shadow: 0 0 6px #e8c84a88; }
+</style>
+</head>
+<body>
+<div class="panel" id="panel"></div>
+
+<script>
+// ── Constants ──────────────────────────────────────────────────────────────
+var MIN_DEG = -135, MAX_DEG = 135, MIN_VAL = 0, MAX_VAL = 11;
+
+function valToDeg(v) {
+  return MIN_DEG + (v / MAX_VAL) * (MAX_DEG - MIN_DEG);
+}
+
+// ── SVG knob builder ───────────────────────────────────────────────────────
+function knobSVG(id, v) {
+  var cx = 26, cy = 26, r = 22, bodyR = 17;
+  var angle = valToDeg(v);
+
+  // Indicator tip position
+  var toRad = function(a) { return (a - 90) * Math.PI / 180; };
+  var tipX  = cx + 14 * Math.cos(toRad(angle));
+  var tipY  = cy + 14 * Math.sin(toRad(angle));
+
+  // Arc from MIN to current angle
+  var arcStart = { x: cx + r * Math.cos(toRad(MIN_DEG)), y: cy + r * Math.sin(toRad(MIN_DEG)) };
+  var arcEnd   = { x: cx + r * Math.cos(toRad(angle)),   y: cy + r * Math.sin(toRad(angle)) };
+  var largeArc = (angle - MIN_DEG) > 180 ? 1 : 0;
+  var arcColor = v === 0 ? '#2a2a2a' : v === 11 ? '#e8c84a' : '#c47a2a';
+  var arcPath  = 'M ' + arcStart.x.toFixed(2) + ' ' + arcStart.y.toFixed(2) +
+                 ' A ' + r + ' ' + r + ' 0 ' + largeArc + ' 1 ' +
+                 arcEnd.x.toFixed(2) + ' ' + arcEnd.y.toFixed(2);
+
+  // Tick marks — visual only, click detection done by angle in the event handler
+  var ticks = '';
+  for (var i = 0; i <= 11; i++) {
+    var ta   = MIN_DEG + (i / 11) * (MAX_DEG - MIN_DEG);
+    var trad = (ta - 90) * Math.PI / 180;
+    var end  = i === 0 || i === 11;
+    var tx1  = (cx + 25 * Math.cos(trad)).toFixed(2);
+    var ty1  = (cy + 25 * Math.sin(trad)).toFixed(2);
+    var tx2  = (cx + (end ? 19 : 21) * Math.cos(trad)).toFixed(2);
+    var ty2  = (cy + (end ? 19 : 21) * Math.sin(trad)).toFixed(2);
+    var tcol = i <= v ? '#888' : '#2e2e2e';
+    ticks += '<line x1="' + tx1 + '" y1="' + ty1 + '" x2="' + tx2 + '" y2="' + ty2 +
+             '" stroke="' + tcol + '" stroke-width="' + (end ? 1.5 : 1) + '" stroke-linecap="round"/>';
+  }
+
+  return '<svg width="52" height="52" viewBox="0 0 52 52" xmlns="http://www.w3.org/2000/svg">' +
+    '<defs>' +
+      '<radialGradient id="kg' + id + '" cx="38%" cy="32%" r="62%">' +
+        '<stop offset="0%" stop-color="#4a4a4a"/>' +
+        '<stop offset="100%" stop-color="#1c1c1c"/>' +
+      '</radialGradient>' +
+    '</defs>' +
+    ticks +
+    '<path d="' + arcPath + '" fill="none" stroke="' + arcColor + '" stroke-width="2.5" stroke-linecap="round"/>' +
+    '<circle cx="26" cy="26" r="' + bodyR + '" fill="url(#kg' + id + ')" stroke="#555" stroke-width="0.5"/>' +
+    '<ellipse cx="22" cy="21" rx="4" ry="2.5" fill="white" opacity="0.06"/>' +
+    '<line x1="26" y1="26" x2="' + tipX.toFixed(2) + '" y2="' + tipY.toFixed(2) +
+          '" stroke="#ddd" stroke-width="2" stroke-linecap="round"/>' +
+    '</svg>';
+}
+
+// ── State ──────────────────────────────────────────────────────────────────
+var state = {};        // { id: { value, defaultValue, label } }
+var idOrder = [];      // preserve insertion order
+
+// ── Render panel ───────────────────────────────────────────────────────────
+function renderAll() {
+  var panel = document.getElementById('panel');
+  var html = '';
+  for (var i = 0; i < idOrder.length; i++) {
+    var id = idOrder[i];
+    var s  = state[id];
+    var valClass = s.value === 0 ? ' off' : s.value === 11 ? ' max' : '';
+    html += '<div class="knob-cell" data-id="' + id + '">' +
+              '<div class="knob-label">' + s.label + '</div>' +
+              knobSVG(id, s.value) +
+              '<div class="knob-value' + valClass + '">' + s.value + '</div>' +
+            '</div>';
+  }
+  panel.innerHTML = html;
+  sendHeight();
+}
+
+
+// ── Streamlit communication ────────────────────────────────────────────────
+function sendHeight() {
+  var h = document.getElementById('panel').offsetHeight + 20;
+  window.parent.postMessage({ isStreamlitMessage: true, type: 'streamlit:setFrameHeight', height: h }, '*');
+}
+
+function sendValues() {
+  var out = {};
+  for (var i = 0; i < idOrder.length; i++) {
+    out[idOrder[i]] = state[idOrder[i]].value;
+  }
+  window.parent.postMessage({ isStreamlitMessage: true, type: 'streamlit:setComponentValue', value: out }, '*');
+}
+
+// Knob arc goes from MIN_DEG=-135 (7-o'clock, 225° from north) to
+// MAX_DEG=135 (5-o'clock, 135° from north) spanning 270°.
+// Clicks anywhere on or around the ring map to the nearest tick value.
+document.addEventListener('click', function(e) {
+  var el  = e.target;
+  // Resolve which SVG was clicked (el may be a child element)
+  var svg = (el.tagName && el.tagName.toLowerCase() === 'svg')
+              ? el
+              : (el.ownerSVGElement || null);
+  if (!svg) return;
+  var cell = svg.parentElement && svg.parentElement.closest
+               ? svg.parentElement.closest('.knob-cell')
+               : null;
+  if (!cell) cell = svg.closest ? svg.closest('.knob-cell') : null;
+  if (!cell) return;
+  var id = cell.dataset.id;
+  if (!state[id]) return;
+
+  // Click position relative to SVG centre (viewBox 52×52, centre = 26,26)
+  var rect  = svg.getBoundingClientRect();
+  var scale = rect.width / 52;
+  var dx    = e.clientX - (rect.left + 26 * scale);
+  var dy    = e.clientY - (rect.top  + 26 * scale);
+  var dist  = Math.sqrt(dx * dx + dy * dy) / scale;
+
+  // Only respond in the ring area (outside knob body, inside SVG edge)
+  if (dist < 14 || dist > 27) return;
+
+  // Angle from north (12-o'clock), clockwise, 0–360°
+  var angle = Math.atan2(dy, dx) * 180 / Math.PI + 90;
+  if (angle < 0) angle += 360;
+
+  // Normalise into the knob's 270° arc starting at 225°
+  if (angle <= 135) angle += 360;   // wrap 0–135° to 360–495°
+  if (angle < 225 || angle > 495) return;  // dead zone (6-o'clock area)
+
+  var val = Math.round((angle - 225) / 270 * 11);
+  val = Math.max(0, Math.min(11, val));
+  if (state[id].value === val) return;
+  state[id].value = val;
+  renderAll();
+  sendValues();
+});
+
+// ── Streamlit render event ─────────────────────────────────────────────────
+// The component owns its state once initialised. Inbound renders are applied
+// only when `reset_nonce` changes (i.e. the "Reset Defaults" button) — ordinary
+// reruns triggered by other widgets never disturb a dial the user just set, so
+// there's no stale-value flash.
+var initialised = false;
+var lastNonce;
+
+function applyDefs(defs, useDefault) {
+  idOrder = [];
+  for (var i = 0; i < defs.length; i++) {
+    var d = defs[i];
+    idOrder.push(d.id);
+    // init → adopt the seeded current value; reset → snap to the default
+    state[d.id] = {
+      value: useDefault ? d.defaultValue : d.value,
+      defaultValue: d.defaultValue,
+      label: d.label,
+    };
+  }
+  renderAll();
+}
+
+window.addEventListener('message', function(e) {
+  try {
+    var data = e.data;
+    if (!data || typeof data !== 'object') return;
+    if (data.type !== 'streamlit:render') return;
+    var args = data.args || {};
+    var defs = args.knobs || [];
+    if (!defs.length) return;
+
+    if (!initialised) {
+      applyDefs(defs, false);     // (re)mount — adopt the seeded current values
+      lastNonce = args.reset_nonce;
+      initialised = true;
+    } else if (args.reset_nonce !== lastNonce) {
+      applyDefs(defs, false);     // nonce changed (reset OR auto-tune) — adopt the
+                                  // value Python sent, which already reflects the action
+      lastNonce = args.reset_nonce;
+      sendValues();               // re-emit so Python's `result` reflects the reset
+    }
+    // else: ordinary rerun, no remount — ignore; the component is the source of truth
+  } catch(err) {
+    document.getElementById('panel').innerHTML =
+      '<div style="color:#c44;font-size:10px;padding:8px;grid-column:1/-1">JS error: ' + err.message + '</div>';
+  }
+});
+
+// Signal ready to Streamlit
+window.parent.postMessage({ isStreamlitMessage: true, type: 'streamlit:componentReady', apiVersion: 1 }, '*');
+</script>
+</body>
+</html>

@@ -1,132 +1,209 @@
-# mixtape
+<p align="center">
+  <img src="assets/cassette-header.svg" width="740" alt="Mixtape — Album Recommendations"/>
+</p>
 
-Album recommendation engine built on the MusicBrainz database. Enter an artist you love, pick one of their albums, and get 10 similar albums recommended by a KNN model trained on community tags, ratings, label data, artist country, track statistics, release era, and Last.fm popularity.
+<p align="center">
+  <img src="https://img.shields.io/badge/▶_SIDE_A-READY_TO_PLAY-ff7a18?style=for-the-badge&labelColor=2b2d33" alt="Ready to play"/>
+  &nbsp;
+  <img src="https://img.shields.io/badge/CATALOGUE-1.7M_ALBUMS-1f8a8a?style=for-the-badge&labelColor=2b2d33" alt="1.7M albums"/>
+  &nbsp;
+  <img src="https://img.shields.io/badge/PYTHON-3.11+-ffd23f?style=for-the-badge&labelColor=2b2d33&color=ffd23f" alt="Python 3.11+"/>
+  &nbsp;
+  <img src="https://img.shields.io/badge/NO_ACCOUNT-REQUIRED-2bb3b3?style=for-the-badge&labelColor=2b2d33" alt="No account required"/>
+</p>
 
-The current app applies feature weights in real time without a pre-fitted model. (Older side-by-side model-comparison apps are retired to `archive/`.)
+---
 
-## How it works
+**Mixtape** finds albums you'll love based on one you already do. Pick any album, adjust six dials — genre, era, country, label, track feel, popularity — and get ten recommendations tuned exactly to what you're after. Powered by the full MusicBrainz catalogue. No account, no streaming service, no internet after setup.
 
-1. **Data import** — DuckDB notebooks extract artist/album data from a local MusicBrainz PostgreSQL instance and save it as Parquet files.
-2. **EDA** — notebooks explore the raw data at the album, artist, and joined dataset level.
-3. **Features** — sparse feature matrices are built from genre tags, labels, ratings, artist country, album track statistics, release era, and Last.fm listener/scrobble counts.
-4. **Model** — cosine-distance KNN models are trained on the L2-normalised feature matrix. Three versions exist, each adding more features.
-5. **App** — a modular Streamlit app (`5-app/app.py`) serves recommendations in the browser, reweighting features in real time via sidebar knobs, with a tag-based Explore tab.
+---
 
-See the [`docs/`](docs/) folder for detailed documentation on each step.
+## ` WHAT YOU NEED `
 
-## Prerequisites
-
-- Python 3.11+
-- A local MusicBrainz PostgreSQL database (only needed to re-import data; Parquet files and trained models are included)
-
-## Quick start
-
-### 1. Clone the repo
-
-```bash
-git clone <repo-url>
-cd mixtape
+```
+▸  A computer — macOS, Windows, or Linux
+▸  Python 3.11   →   python.org/downloads
+▸  ~500 MB free disk space
+▸  A terminal / command prompt
 ```
 
-### 2. Create and activate a virtual environment
+That's it. Once set up, the app runs entirely on your machine.
+
+---
+
+## ` GETTING STARTED `
+
+### Step 1 — Download
+
+Click the green **`Code ▾`** button at the top of this page → **Download ZIP**.  
+Unzip it somewhere easy to find, like your Desktop.
+
+> Comfortable with git? `git clone https://github.com/yourusername/mixtape-app.git`
+
+---
+
+### Step 2 — Open a terminal inside the folder
+
+| System | How |
+|--------|-----|
+| **Mac** | Right-click the `mixtape-app` folder → _New Terminal at Folder_ |
+| **Windows** | Open the folder → click the address bar → type `cmd` → press Enter |
+| **Linux** | Right-click the folder → _Open Terminal_ |
+
+---
+
+### Step 3 — Set up Python
+
+Paste these two lines into your terminal, pressing **Enter** after each:
 
 ```bash
 python3 -m venv env
-source env/bin/activate       # macOS/Linux
-# .\env\Scripts\activate      # Windows
 ```
 
-### 3. Install dependencies
+```bash
+source env/bin/activate
+```
+
+> **Windows:** second line is `env\Scripts\activate`
+
+You'll see `(env)` appear at the start of your prompt — that means it worked.
+
+---
+
+### Step 4 — Install packages
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Run the app
+Takes about a minute the first time.
+
+---
+
+### Step 5 — Press play
 
 ```bash
-streamlit run 5-app/app.py
+streamlit run app/app.py
 ```
 
-The app opens at **http://localhost:8505** (port set in `5-app/.streamlit/config.toml`). Start typing an artist in the live search box to pick one, choose a starting album, and get recommendations from the v3 feature set. You can reweight features (genre, record label, country, track stats, era, and Last.fm popularity) in real time using guitar-amp-style **knobs** (0–11) in the sidebar. Ratings weight auto-syncs to the Popularity dial. Two mixing-console-style **vertical faders** — **Live Albums** (Live/Both/Studio) and **Greatest Hits** (Hits/Both/Albums) — filter by MusicBrainz release type across the album picker, the recommendations, and the Explore results.
+A browser window opens at **`http://localhost:8505`** automatically.  
+First load takes 20–30 seconds while 1.7 million albums load into memory. After that, every search is instant.
 
-No database connection is needed — the Parquet files and feature matrices in `data/` are all that's required. (The trained `.joblib` models used by the older comparison apps are not committed; retrain them with the v2/v3 notebooks if you want those apps. Older monolithic app files are archived in `5-app/archive/`.)
+---
 
-## Re-building from scratch
+## ` USING MIXTAPE `
 
-See [REBUILDING.md](REBUILDING.md) for the full step-by-step pipeline.
+### Find Similar Albums
 
-## Project layout
+1. **Type an artist name** in the search box and pick from the dropdown
+2. **Choose an album** from their discography
+3. Hit **Find Similar** — you'll get 10 recommendations with a similarity score
+
+---
+
+### The Mixing Desk
+
+The sidebar has **six dials**, like a mixing desk. Turn them to shape what drives the recommendations:
 
 ```
-mixtape/
-├── 1-data/
-│   ├── 01-postgres-to-parquet.ipynb         Import: Postgres → Parquet
-│   ├── 02-parquet-to-dataframes.ipynb       Build: Parquet → pickled DataFrames (EDA only)
-│   ├── 03-feature-country-import.ipynb      Import: artist country SQL → Parquet (needs Postgres)
-│   ├── 04-feature-track-stats-import.ipynb  Import: track stats SQL → Parquet (needs Postgres)
-│   ├── 05-lastfm-scraper.ipynb              Scrape: Last.fm listener/scrobble counts → data/lastfm_data.parquet
-│   ├── 06-extract-secondary-type.ipynb      Import: live/compilation flags → data/raw/mb_album_secondary_type.parquet
-│   ├── 07-extract-tag-area.ipynb            Import: tag vocabulary + area names → data/raw/mb_tag.parquet, mb_area.parquet
-│   ├── queries/                             SQL queries for DuckDB Postgres extraction (incl. live/compilation flags)
-│   ├── schema-diagrams.md                   Parquet table relationships and pipeline data flow
-│   └── SchemaSpy/                           Auto-generated HTML reference for the MusicBrainz Postgres schema
-├── 2-eda/
-│   ├── 01-EDA-albums.ipynb                  Exploratory analysis: albums + key design decisions
-│   ├── 02-EDA-artists.ipynb                 Exploratory analysis: artists + key design decisions
-│   ├── 04-EDA-year.ipynb                    Exploratory analysis: year/era sources and coverage
-│   ├── 05-EDA-tags-labels.ipynb             Exploratory analysis: tag/label coverage + genre blend
-│   └── 06-EDA-track-stats.ipynb             Exploratory analysis: track length, count, year + feature correlations
-├── 3-features/
-│   ├── 01-album-artist-index.ipynb          Build: master album/artist ID index (run first)
-│   ├── 02-feature-genre.ipynb               Build: album, artist, and blended genre tag matrices
-│   ├── 03-feature-label.ipynb               Build: label, type, and record_label matrices
-│   ├── 04-feature-ratings.ipynb             Build: Bayesian-weighted rating matrices
-│   ├── 05-feature-country.ipynb             Build: country feature matrix
-│   ├── 06-feature-track-stats.ipynb         Build: track stats feature matrix
-│   ├── 08-feature-assembly.ipynb            Inspect: combined feature matrix
-│   ├── 09–12-feature-*.ipynb                Experimental: contributors, tag hierarchy, tag parents
-│   ├── 13-feature-lastfm-popularity.ipynb   Build: Last.fm popularity sparse matrix
-│   ├── 14-feature-temporal.ipynb            Build: era parquet + era matrix + temporal matrix (era + year)
-│   └── feature_charts/                      Saved feature diagnostic plots + regen script
-├── 4-model/
-│   ├── 01-knn-v1-training.ipynb             Train: v1 KNN model → data/model/
-│   ├── 02-knn-query.ipynb                   Prototype: interactive recommendation queries
-│   ├── 03-knn-v2-training.ipynb             Train: v2 KNN model → data/model_v2/
-│   ├── 04-knn-v3-training.ipynb             Train: v3 KNN model → data/model_v3/
-│   ├── 05-knn-v4-training.ipynb             Train: v4 KNN model (in progress)
-│   ├── 06-evaluate-lastfm.ipynb             Evaluate: recommendation quality vs Last.fm listening data
-│   └── tuning/                              Weight tuning experiments (v2/v3/v4)
-├── 5-app/                                   Streamlit app (modular — run app.py)
-│   ├── app.py                               Entry point: page config, tabs, result rendering
-│   ├── config.py                            Constants, presets, feature-block config, weight↔dial helpers
-│   ├── engine.py                            Data loading, weighted-cosine recs, auto-tune, explore search
-│   ├── controls.py                          Sidebar: presets, knob panel, auto-tune, content-filter faders
-│   ├── style.py                             Dark/light themes + CSS
-│   ├── fader_component/                     Custom HTML/SVG vertical faders (content filters)
-│   └── knob_component/                      Custom HTML/SVG rotary knob panel (feature weights)
-├── data/
-│   ├── mb_*.parquet                         Raw MusicBrainz exports (committed)
-│   ├── sql_feature_*.parquet                Country + track-stats feature exports (committed)
-│   ├── raw/                                 Tag/area vocab + secondary-type extracts (committed)
-│   ├── features/                            Sparse feature matrices + index (.npz, .pkl) (committed)
-│   ├── model/                               v1 model artefacts (gitignored)
-│   ├── model_v2/                            v2 model artefacts (gitignored)
-│   ├── model_v3/                            v3 model artefacts (gitignored)
-│   └── pickles/                             Intermediate DataFrames (gitignored)
-├── docs/                                    Step-by-step pipeline documentation
-├── Planning/                                Planning and backlog documents
-├── archive/                                 Retired notebooks, apps, and datasets
-└── requirements.txt
+╔══════════════════════════════════════════════════════╗
+║  GENRE       Match by musical style and tags         ║
+║  RECORD LBL  Albums from the same label family       ║
+║  COUNTRY     Music from the same country or region   ║
+║  TRACK STATS Similar album length and song durations ║
+║  ERA         Same decade or musical period           ║
+║  POPULARITY  Similar critical and listener reception ║
+╚══════════════════════════════════════════════════════╝
 ```
 
-## Documentation
+`0` = this signal ignored entirely &nbsp;·&nbsp; `11` = this signal dominates
 
-| Doc | Contents |
-|-----|----------|
-| [01-data-import.md](docs/01-data-import.md) | Parquet table schemas and import logic |
-| [02-datasets.md](docs/02-datasets.md) | DataFrame construction and joins |
-| [03-features.md](docs/03-features.md) | Feature engineering and Bayesian ratings |
-| [04-model.md](docs/04-model.md) | KNN training pipeline |
-| [05-app.md](docs/05-app.md) | Streamlit app walkthrough |
-| [1-data/schema-diagrams.md](1-data/schema-diagrams.md) | Parquet table relationships and pipeline data flow |
+---
+
+### Presets
+
+Not sure where to start? Hit a preset to load a pre-tuned mix:
+
+| Preset | What it does |
+|--------|-------------|
+| **Full Mix** | Balanced blend of everything — good starting point |
+| **Genre Purist** | Style only. Labels, country, era all off |
+| **Same Vibe, New Artist** | Similar sound and era, across different artists |
+| **Local Sound** | Music from the same country or region |
+| **Critics' Pick** | Albums with similar recognition and reception |
+
+---
+
+### Auto-Tune
+
+Hit the **Auto-Tune** button after selecting an album. Mixtape analyses how much useful signal each feature has for that specific album and sets the dials accordingly. Works best on well-documented albums.
+
+---
+
+### Content Filters
+
+Two faders at the bottom of the sidebar let you control what shows up in results:
+
+- **Live Albums** — Studio only / Both / Live only
+- **Greatest Hits** — Albums only / Both / Compilations only
+
+---
+
+### Explore Tab
+
+Don't have a specific album in mind? Switch to the **Explore** tab. Pick genre tags, a country, and a decade — Mixtape surfaces albums that match. Click any result to feed it straight into Find Similar.
+
+---
+
+## ` TROUBLESHOOTING `
+
+<details>
+<summary><b>The app won't start</b></summary>
+
+Make sure you ran `source env/bin/activate` first — the `(env)` prefix should be visible in your terminal. Then try `pip install -r requirements.txt` again.
+
+</details>
+
+<details>
+<summary><b>Browser doesn't open automatically</b></summary>
+
+Go to `http://localhost:8505` manually in any browser.
+
+</details>
+
+<details>
+<summary><b>Port already in use</b></summary>
+
+Something else is running on port 8505. Use:
+```bash
+streamlit run app/app.py --server.port 8506
+```
+
+</details>
+
+<details>
+<summary><b>Very slow on first load</b></summary>
+
+Normal — the app indexes 1.7 million albums into memory on first startup. Searches after that are fast. Don't close the browser tab between searches.
+
+</details>
+
+---
+
+## ` THE DATA `
+
+Mixtape draws from two open data sources:
+
+**[MusicBrainz](https://musicbrainz.org)** — a community-maintained music encyclopaedia covering 1.7 million albums. Provides genre tags, record label history, country of origin, track statistics, and release era.
+
+**[Last.fm](https://www.last.fm)** — listener play counts and scrobble data, used to build the Popularity signal. Albums with more listener engagement score higher on this dial.
+
+No streaming service connection. No personal data collected.
+
+---
+
+<p align="center">
+  <sub>
+    ◀◀ &nbsp; ■ &nbsp; ▶ &nbsp; ▶▶ &nbsp;&nbsp;&nbsp; · &nbsp;&nbsp;&nbsp; MIX<b>TAPE</b> · TPS-90 STEREO &nbsp;&nbsp;&nbsp; · &nbsp;&nbsp;&nbsp; ◀◀ &nbsp; ■ &nbsp; ▶ &nbsp; ▶▶
+  </sub>
+</p>

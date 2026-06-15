@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>README Preview</title>
+<style>
+  body {
+    background: #0d1117;
+    color: #e6edf3;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 32px 24px;
+  }
+  p { margin: 0 0 16px; }
+  p[align="center"] { text-align: center; }
+  img { max-width: 100%; }
+  h1, h2, h3 { color: #e6edf3; border-bottom: 1px solid #30363d; padding-bottom: 8px; margin: 24px 0 16px; }
+  h1 { font-size: 2em; }
+  h2 { font-size: 1.5em; }
+  h3 { font-size: 1.25em; border: none; }
+  hr { border: none; border-top: 1px solid #30363d; margin: 24px 0; }
+  code { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 2px 6px; font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.875em; color: #e6edf3; }
+  pre { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 16px; overflow-x: auto; }
+  pre code { background: none; border: none; padding: 0; font-size: 0.875em; }
+  table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+  th, td { border: 1px solid #30363d; padding: 8px 12px; text-align: left; }
+  th { background: #161b22; }
+  blockquote { border-left: 3px solid #30363d; margin: 0; padding: 0 16px; color: #8b949e; }
+  details { border: 1px solid #30363d; border-radius: 6px; padding: 8px 16px; margin: 8px 0; }
+  summary { cursor: pointer; font-weight: 600; }
+  a { color: #58a6ff; }
+  sub { color: #8b949e; }
+</style>
+</head>
+<body>
+
+<p align="center">
+  <img src="cassette-header.svg" width="700" alt="Mixtape — Album Recommendations"/>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/▶_SIDE_A-READY_TO_PLAY-ff7a18?style=for-the-badge&labelColor=2b2d33" alt="Ready to play"/>
+  &nbsp;
+  <img src="https://img.shields.io/badge/CATALOGUE-1.7M_ALBUMS-1f8a8a?style=for-the-badge&labelColor=2b2d33" alt="1.7M albums"/>
+  &nbsp;
+  <img src="https://img.shields.io/badge/PYTHON-3.11+-ffd23f?style=for-the-badge&labelColor=2b2d33&color=ffd23f" alt="Python 3.11+"/>
+  &nbsp;
+  <img src="https://img.shields.io/badge/NO_ACCOUNT-REQUIRED-2bb3b3?style=for-the-badge&labelColor=2b2d33" alt="No account required"/>
+</p>
+
+<hr>
+
+<p><strong>Mixtape</strong> finds albums you'll love based on one you already do. Pick any album, adjust six dials — genre, era, country, label, track feel, popularity — and get ten recommendations tuned exactly to what you're after. Powered by the full MusicBrainz catalogue. No account, no streaming service, no internet after setup.</p>
+
+<hr>
+
+<h2>` WHAT YOU NEED `</h2>
+
+<pre><code>▸  A computer — macOS, Windows, or Linux
+▸  Python 3.11   →   python.org/downloads
+▸  ~500 MB free disk space
+▸  A terminal / command prompt</code></pre>
+
+<h2>` GETTING STARTED `</h2>
+
+<h3>Step 1 — Download</h3>
+<p>Click the green <strong><code>Code ▾</code></strong> button at the top of this page → <strong>Download ZIP</strong>.<br>
+Unzip it somewhere easy to find, like your Desktop.</p>
+
+<h3>Step 2 — Open a terminal</h3>
+<table>
+  <tr><th>System</th><th>How</th></tr>
+  <tr><td><strong>Mac</strong></td><td>Right-click the <code>mixtape-app</code> folder → <em>New Terminal at Folder</em></td></tr>
+  <tr><td><strong>Windows</strong></td><td>Open the folder → click the address bar → type <code>cmd</code> → press Enter</td></tr>
+  <tr><td><strong>Linux</strong></td><td>Right-click the folder → <em>Open Terminal</em></td></tr>
+</table>
+
+<h3>Step 3 — Set up Python</h3>
+<pre><code>python3 -m venv env</code></pre>
+<pre><code>source env/bin/activate</code></pre>
+<blockquote><p><strong>Windows:</strong> second line is <code>env\Scripts\activate</code></p></blockquote>
+
+<h3>Step 4 — Install packages</h3>
+<pre><code>pip install -r requirements.txt</code></pre>
+
+<h3>Step 5 — Press play</h3>
+<pre><code>streamlit run app/app.py</code></pre>
+<p>A browser window opens at <strong><code>http://localhost:8505</code></strong> automatically.<br>
+First load takes 20–30 seconds while 1.7 million albums load into memory.</p>
+
+<hr>
+
+<h2>` THE MIX `</h2>
+
+<p>The sidebar has <strong>six dials</strong> — like a mixing desk:</p>
+
+<pre><code>╔══════════════════════════════════════════════════════╗
+║  GENRE       Match by musical style and tags         ║
+║  RECORD LBL  Albums from the same label family       ║
+║  COUNTRY     Music from the same country or region   ║
+║  TRACK STATS Similar album length and song durations ║
+║  ERA         Same decade or musical period           ║
+║  POPULARITY  Similar critical and listener reception ║
+╚══════════════════════════════════════════════════════╝</code></pre>
+
+<p><code>0</code> = signal ignored &nbsp;·&nbsp; <code>11</code> = signal dominates</p>
+
+<hr>
+
+<p align="center">
+  <sub>◀◀ &nbsp; ■ &nbsp; ▶ &nbsp; ▶▶ &nbsp;&nbsp;&nbsp; · &nbsp;&nbsp;&nbsp; MIX<strong>TAPE</strong> · TPS-90 STEREO &nbsp;&nbsp;&nbsp; · &nbsp;&nbsp;&nbsp; ◀◀ &nbsp; ■ &nbsp; ▶ &nbsp; ▶▶</sub>
+</p>
+
+</body>
+</html>

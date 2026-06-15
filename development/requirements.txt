@@ -1,0 +1,31 @@
+# Core Data Science
+pandas
+numpy
+scikit-learn
+scipy
+ydata-profiling
+joblib
+matplotlib
+seaborn
+
+# Database Connection
+duckdb  # only needed to re-import data from Postgres (1-EDA/01-postgres-to-parquet.ipynb)
+                # and for feature extraction (2-Prototyping/06, 07)
+
+# App
+streamlit
+streamlit-searchbox  # reactive artist typeahead in 5-app/app.py
+
+# Scraping
+requests
+beautifulsoup4
+filelock
+openpyxl
+rapidfuzz  # fuzzy album name matching in 3-features/13-feature-lastfm-popularity.ipynb
+
+# Environment
+jupyterlab
+ipykernel
+pyarrow
+python-dotenv
+ipywidgets

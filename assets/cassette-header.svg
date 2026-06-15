@@ -1,0 +1,130 @@
+<svg viewBox="0 0 760 360" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:760px">
+  <defs>
+    <radialGradient id="bodyGrad" cx="50%" cy="20%" r="70%">
+      <stop offset="0%" stop-color="#3a3d45"/>
+      <stop offset="100%" stop-color="#1d1f24"/>
+    </radialGradient>
+    <radialGradient id="reelGrad" cx="38%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#4a4743"/>
+      <stop offset="100%" stop-color="#1e1c18"/>
+    </radialGradient>
+    <radialGradient id="hubGrad" cx="40%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#2a2c30"/>
+      <stop offset="100%" stop-color="#0d0d0d"/>
+    </radialGradient>
+    <filter id="cassShadow" x="-5%" y="-5%" width="110%" height="120%">
+      <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+    <clipPath id="labelClip">
+      <rect x="62" y="44" width="636" height="148" rx="7"/>
+    </clipPath>
+    <linearGradient id="labelGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f9f0de"/>
+      <stop offset="100%" stop-color="#ede0c0"/>
+    </linearGradient>
+    <linearGradient id="tapeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2a2721"/>
+      <stop offset="100%" stop-color="#111008"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Cassette outer body -->
+  <rect x="18" y="12" width="724" height="332" rx="24" fill="url(#bodyGrad)" filter="url(#cassShadow)" stroke="#0b0c0f" stroke-width="2.5"/>
+
+  <!-- Side grip ridges -->
+  <rect x="20" y="120" width="8" height="90" rx="4" fill="#22242a" opacity="0.9"/>
+  <rect x="24" y="128" width="4" height="74" rx="2" fill="#181a1f" opacity="0.7"/>
+  <rect x="732" y="120" width="8" height="90" rx="4" fill="#22242a" opacity="0.9"/>
+  <rect x="736" y="128" width="4" height="74" rx="2" fill="#181a1f" opacity="0.7"/>
+
+  <!-- Inner recess -->
+  <rect x="36" y="28" width="688" height="298" rx="16" fill="#12141a" stroke="#0a0b0e" stroke-width="1.5"/>
+  <!-- Recess highlight -->
+  <rect x="36" y="28" width="688" height="4" rx="2" fill="#ffffff" opacity="0.04"/>
+
+  <!-- Label base -->
+  <rect x="62" y="44" width="636" height="148" rx="7" fill="url(#labelGrad)" stroke="rgba(0,0,0,0.15)" stroke-width="1"/>
+
+  <!-- Stripe bands (4-colour retro) -->
+  <rect x="62" y="44" width="636" height="20" fill="#1f8a8a" clip-path="url(#labelClip)"/>
+  <rect x="62" y="64" width="636" height="18" fill="#2bb3b3" clip-path="url(#labelClip)"/>
+  <rect x="62" y="82" width="636" height="18" fill="#f2c14e" clip-path="url(#labelClip)"/>
+  <rect x="62" y="100" width="636" height="18" fill="#e07a3f" clip-path="url(#labelClip)"/>
+  <!-- Stripe shadow separator -->
+  <rect x="62" y="118" width="636" height="1" fill="rgba(0,0,0,0.18)" clip-path="url(#labelClip)"/>
+
+  <!-- MIXTAPE title -->
+  <text x="380" y="152" text-anchor="middle"
+        font-family="'Courier New', 'Lucida Console', monospace"
+        font-size="40" font-weight="bold" fill="#20180e" letter-spacing="14">MIXTAPE</text>
+
+  <!-- Subtitle -->
+  <text x="380" y="175" text-anchor="middle"
+        font-family="'Courier New', 'Lucida Console', monospace"
+        font-size="12" fill="#8b6520" letter-spacing="5">ALBUM · RECOMMENDATIONS · ENGINE</text>
+
+
+  <!-- LEFT REEL WINDOW -->
+  <circle cx="192" cy="264" r="50" fill="#0d0e11" stroke="#0a0b0d" stroke-width="1.5"/>
+  <circle cx="192" cy="264" r="48" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="2"/>
+  <circle cx="192" cy="264" r="42" fill="url(#reelGrad)"/>
+  <circle cx="192" cy="264" r="39" fill="none" stroke="#3a3730" stroke-width="2.5"/>
+  <circle cx="192" cy="264" r="34" fill="none" stroke="#2e2b28" stroke-width="2"/>
+  <circle cx="192" cy="264" r="28" fill="none" stroke="#2a2724" stroke-width="1.5"/>
+  <circle cx="192" cy="264" r="22" fill="none" stroke="#252320" stroke-width="1.5"/>
+  <circle cx="192" cy="264" r="13" fill="url(#hubGrad)" stroke="#0a0b0d" stroke-width="1"/>
+  <g transform="translate(192,264)" stroke="#b0b5bc" stroke-width="1.5" stroke-linecap="round">
+    <line x1="0" y1="-9" x2="0" y2="9"/>
+    <line x1="-7.8" y1="-4.5" x2="7.8" y2="4.5"/>
+    <line x1="-7.8" y1="4.5" x2="7.8" y2="-4.5"/>
+  </g>
+
+  <!-- RIGHT REEL WINDOW -->
+  <circle cx="568" cy="264" r="50" fill="#0d0e11" stroke="#0a0b0d" stroke-width="1.5"/>
+  <circle cx="568" cy="264" r="48" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="2"/>
+  <circle cx="568" cy="264" r="42" fill="url(#reelGrad)"/>
+  <circle cx="568" cy="264" r="39" fill="none" stroke="#3a3730" stroke-width="2.5"/>
+  <circle cx="568" cy="264" r="34" fill="none" stroke="#2e2b28" stroke-width="2"/>
+  <circle cx="568" cy="264" r="28" fill="none" stroke="#2a2724" stroke-width="1.5"/>
+  <circle cx="568" cy="264" r="22" fill="none" stroke="#252320" stroke-width="1.5"/>
+  <circle cx="568" cy="264" r="13" fill="url(#hubGrad)" stroke="#0a0b0d" stroke-width="1"/>
+  <g transform="translate(568,264)" stroke="#b0b5bc" stroke-width="1.5" stroke-linecap="round">
+    <line x1="0" y1="-9" x2="0" y2="9"/>
+    <line x1="-7.8" y1="-4.5" x2="7.8" y2="4.5"/>
+    <line x1="-7.8" y1="4.5" x2="7.8" y2="-4.5"/>
+  </g>
+
+  <!-- Tape path -->
+  <path d="M242 278 Q380 270 518 278" stroke="#1a1710" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <path d="M242 278 Q380 270 518 278" stroke="#2a2620" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+  <!-- Tape head opening -->
+  <rect x="342" y="300" width="136" height="20" rx="5" fill="#0a0b0e" stroke="#1a1b20" stroke-width="1"/>
+  <rect x="357" y="305" width="14" height="10" rx="2" fill="#080909"/>
+  <rect x="403" y="305" width="14" height="10" rx="2" fill="#080909"/>
+  <rect x="342" y="300" width="136" height="3" rx="2" fill="rgba(255,255,255,0.05)"/>
+
+  <!-- Corner screws -->
+  <circle cx="74" cy="58" r="10" fill="#1a1b1f" stroke="#090a0c" stroke-width="1.5"/>
+  <circle cx="74" cy="58" r="6" fill="#151618" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>
+  <line x1="68" y1="58" x2="80" y2="58" stroke="#2e3035" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="74" y1="52" x2="74" y2="64" stroke="#2e3035" stroke-width="1.5" stroke-linecap="round"/>
+
+  <circle cx="686" cy="58" r="10" fill="#1a1b1f" stroke="#090a0c" stroke-width="1.5"/>
+  <circle cx="686" cy="58" r="6" fill="#151618" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>
+  <line x1="680" y1="58" x2="692" y2="58" stroke="#2e3035" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="686" y1="52" x2="686" y2="64" stroke="#2e3035" stroke-width="1.5" stroke-linecap="round"/>
+
+  <circle cx="74" cy="326" r="10" fill="#1a1b1f" stroke="#090a0c" stroke-width="1.5"/>
+  <circle cx="74" cy="326" r="6" fill="#151618" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>
+  <line x1="68" y1="326" x2="80" y2="326" stroke="#2e3035" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="74" y1="320" x2="74" y2="332" stroke="#2e3035" stroke-width="1.5" stroke-linecap="round"/>
+
+  <circle cx="686" cy="326" r="10" fill="#1a1b1f" stroke="#090a0c" stroke-width="1.5"/>
+  <circle cx="686" cy="326" r="6" fill="#151618" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>
+  <line x1="680" y1="326" x2="692" y2="326" stroke="#2e3035" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="686" y1="320" x2="686" y2="332" stroke="#2e3035" stroke-width="1.5" stroke-linecap="round"/>
+
+  <!-- Top sheen -->
+  <rect x="18" y="12" width="724" height="18" rx="12" fill="rgba(255,255,255,0.05)"/>
+</svg>
