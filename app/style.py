@@ -8,14 +8,14 @@ LIGHT = dict(
     bg2="#f5f0e8", panel="#efe7d6", panel2="#e8e0cf", line="#d8cdb6",
     txt="#2c2416", dim="#9c8c72", gold="#9b6e2e", gold_soft="#c8a96e", gold_deep="#7a5320",
     input="#f3ecdc", rowline="#e3dac6", grain=".018", popbg="#f3ecdc", knob="light",
-    track_off="#d8cdb6")
+    track_off="#d8cdb6", input_solid="#f3ecdc")
 
 DARK = dict(
     bg="linear-gradient(160deg,#1a1e27 0%,#171b23 50%,#13161d 100%)",
     bg2="#1c212b", panel="#1a1f29", panel2="#222834", line="rgba(255,255,255,.08)",
     txt="#e8eaed", dim="#8a909c", gold="#e8c84a", gold_soft="#f3d77e", gold_deep="#c4972a",
     input="rgba(255,255,255,.04)", rowline="rgba(255,255,255,.07)", grain=".02", popbg="#222834",
-    knob="dark", track_off="rgba(255,255,255,.12)")
+    knob="dark", track_off="rgba(255,255,255,.12)", input_solid="#222834")
 
 
 def get_theme():
@@ -23,6 +23,109 @@ def get_theme():
     st.session_state.setdefault('dark', True)   # dark navy is the default look
     is_dark = st.session_state['dark']
     return (DARK if is_dark else LIGHT), ("dark" if is_dark else "light")
+
+
+def searchbox_styles(T):
+    """react-select style overrides for st_searchbox.
+
+    The searchbox is a custom component rendered in a sandboxed iframe, so the
+    page-level CSS in inject_css() can't reach it — left alone it inherits
+    Streamlit's fixed `base="dark"` theme and ignores our light/dark toggle.
+    Rebuilding these overrides from the active theme T (and passing them on each
+    rerun) keeps the box, dropdown and icons in step with the rest of the UI.
+    """
+    # DM Sans is the app's UI font; patch_searchbox_iframe() loads it into the
+    # component iframe so this resolves to the real face (else falls back to sans).
+    font = '"DM Sans","Source Sans Pro",sans-serif'
+    return {
+        # Painted behind the control. The control has rounded corners but the
+        # iframe body is square and fixed-dark, so without this the dark body
+        # shows through as four corner marks — paint it the page colour instead.
+        "wrapper": {"backgroundColor": T['bg2']},
+        "searchbox": {
+            "control": {
+                # opaque (not the page's translucent --input) so it fully covers
+                # the component iframe's fixed dark body behind it
+                "backgroundColor": T['input_solid'],
+                "border": f"1px solid {T['line']}",
+                "borderRadius": "10px",
+                "fontFamily": font,
+            },
+            "input": {"color": T['gold_deep'], "fontFamily": font},
+            "singleValue": {"color": T['gold_deep'], "fontFamily": font},
+            "placeholder": {"color": T['dim'], "fontFamily": font},
+            "menuList": {
+                "backgroundColor": T['popbg'],
+                "border": f"1px solid {T['line']}",
+                "borderRadius": "10px",
+                "boxShadow": "0 6px 20px rgba(0,0,0,.25)",
+            },
+            # no highlightColor — the matched substring should not be highlighted.
+            # Override react-select's default blue focus/active highlight with the
+            # same gold tint the baseweb dropdowns use (see [data-baseweb="popover"]
+            # li:hover in inject_css) so all dropdowns match.
+            "option": {
+                "color": T['txt'],
+                "backgroundColor": T['popbg'],
+                "fontFamily": font,
+                # !important to deterministically beat react-select's default
+                # blue :active rule (same specificity, source-order otherwise)
+                "&:hover": {"backgroundColor": f"color-mix(in srgb,{T['gold']} 20%,transparent) !important"},
+                "&:active": {"backgroundColor": f"color-mix(in srgb,{T['gold']} 20%,transparent) !important"},
+            },
+        },
+        # hide the react-select chevron; it can't be made to match baseweb's
+        # selectbox arrow, and a mismatched arrow reads worse than none
+        "dropdown": {"width": 0, "height": 0},
+        "clear": {"icon": "cross", "fill": T['gold'], "stroke": T['gold']},
+    }
+
+
+def patch_searchbox_iframe():
+    """Patch the st_searchbox component iframe from the page side.
+
+    The searchbox renders in a sandboxed, same-origin iframe whose <body> is
+    painted with Streamlit's fixed base-theme background (dark). That dark body
+    shows through wherever the control doesn't cover it — the rounded corners and
+    the gap above the open dropdown — and no web font is loaded inside it. Neither
+    is reachable via style_overrides. This drops a tiny components.html helper that
+    reaches the (same-origin) iframe and makes its body transparent (so the themed
+    page shows through instead) and loads DM Sans so the box matches the UI font.
+    Degrades silently (try/except) if the parent document can't be reached.
+    """
+    import streamlit.components.v1 as components
+    components.html("""
+<script>
+(function () {
+  function patch() {
+    try {
+      var pdoc = window.parent.document;
+      var frames = pdoc.querySelectorAll('iframe[title="streamlit_searchbox.searchbox"]');
+      frames.forEach(function (fr) {
+        var d = fr.contentDocument;
+        if (!d || d.getElementById('mixtape-sb-patch')) return;
+        var link = d.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap';
+        d.head.appendChild(link);
+        var st = d.createElement('style');
+        st.id = 'mixtape-sb-patch';
+        // transparent iframe body (no dark corner artifacts on the control) and
+        // a transparent, shadowless react-select menu container (its default
+        // white panel otherwise shows through the themed menuList's rounded
+        // corners). Elevation is restored on the menuList via style_overrides.
+        st.textContent =
+          'html,body{background:transparent !important;}' +
+          'div[class*="-menu"]{background:transparent !important;box-shadow:none !important;}';
+        d.head.appendChild(st);
+      });
+    } catch (e) { /* cross-origin / not ready — ignore */ }
+  }
+  patch();
+  setInterval(patch, 700);
+})();
+</script>
+""", height=0)
 
 
 def inject_css(T):
@@ -61,8 +164,10 @@ h1,h2,h3 {{ font-family:'DM Serif Display',serif; }}
 [data-baseweb="popover"] li:hover {{ background:color-mix(in srgb,var(--gold) 20%,transparent)!important; }}
 
 /* labels */
-.stTextInput label, .stSelectbox label, .stMultiSelect label {{ color:var(--gold)!important; font-weight:700;
+.stTextInput label, .stSelectbox label, .stMultiSelect label,
+.mixtape-field-label {{ color:var(--gold)!important; font-weight:700;
   letter-spacing:.04em; text-transform:uppercase; font-size:.7rem; }}
+.mixtape-field-label {{ font-family:'DM Sans',sans-serif; margin-bottom:.4rem; }}
 
 /* buttons */
 .stButton button {{ border-radius:10px; font-family:'DM Mono',monospace; font-weight:600;

@@ -18,7 +18,7 @@ from streamlit_searchbox import st_searchbox
 
 from config import (BLOCK_FILES, KNOB_BLOCKS, BLOCK_LABELS,
                     EXPLORE_TOP_N_TAGS, EXPLORE_RESULTS)
-from style import get_theme, inject_css
+from style import get_theme, inject_css, searchbox_styles, patch_searchbox_iframe
 from engine import (load_blocks, load_lookup, load_explore_data,
                     load_secondary_types,
                     make_artist_search, recommend, explore_search,
@@ -216,12 +216,20 @@ with tab_similar:
             st.rerun()
     else:
         # Live typeahead — suggestions appear and refine as you type.
+        # The searchbox is a sandboxed-iframe component: its built-in label sits
+        # on the iframe's fixed dark base-theme background, so we render our own
+        # themed label instead. The key stays constant across theme changes so the
+        # typed artist / selection survives a light/dark toggle; style_overrides is
+        # rebuilt from the active theme T and re-applied in place on each rerun.
+        st.markdown("<div class='mixtape-field-label'>Artist</div>", unsafe_allow_html=True)
         selected_artist = st_searchbox(
             make_artist_search(lookup),
-            label="Artist",
+            label="",
             placeholder="Start typing an artist…",
             key="artist_search",
+            style_overrides=searchbox_styles(T),
         )
+        patch_searchbox_iframe()  # transparent iframe body + UI font (see style.py)
         album_id = None
         if selected_artist:
             artist_albums = lookup[lookup['artist_name'] == selected_artist]
