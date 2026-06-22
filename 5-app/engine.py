@@ -64,6 +64,25 @@ def _find_parquet(name):
 
 
 @st.cache_resource
+def load_lastfm_urls():
+    """album_id → Last.fm album URL, reconstructed from Artist + Album names."""
+    path = os.path.join(DATA_DIR, 'lastfm_data.parquet')
+    if not os.path.exists(path):
+        return {}
+    df = pd.read_parquet(path, columns=['album_id', 'Artist', 'Album'])
+    df = df.dropna(subset=['album_id'])
+    df = df.drop_duplicates(subset='album_id')
+
+    def _build_url(row):
+        a = str(row['Artist']).replace(' ', '+')
+        al = str(row['Album']).replace(' ', '+')
+        return f'https://www.last.fm/music/{a}/{al}'
+
+    df['url'] = df.apply(_build_url, axis=1)
+    return dict(zip(df['album_id'].astype(int), df['url']))
+
+
+@st.cache_resource
 def load_secondary_types():
     """album_id → (is_live, is_compilation). Returns None if file absent."""
     from config import SECONDARY_TYPE_FILE
