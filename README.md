@@ -83,7 +83,7 @@ Takes about a minute the first time.
 ### Step 5 — Press play
 
 ```bash
-streamlit run app/app.py
+streamlit run app.py
 ```
 
 A browser window opens at **`http://localhost:8505`** automatically.  
@@ -176,7 +176,7 @@ Go to `http://localhost:8505` manually in any browser.
 
 Something else is running on port 8505. Use:
 ```bash
-streamlit run app/app.py --server.port 8506
+streamlit run app.py --server.port 8506
 ```
 
 </details>

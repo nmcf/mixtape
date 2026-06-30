@@ -8,8 +8,8 @@ import pandas as pd
 import streamlit as st
 from scipy.sparse import load_npz
 
-from config import (DATA_DIR, FEATURES_DIR, INDEX_DIR, BLOCK_FILES, KNOB_BLOCKS, BLOCK_LABELS,
-                    DEFAULT_WEIGHTS, WEIGHT_MAX, EXPLORE_TOP_N_TAGS, EXPLORE_RESULTS)
+from .config import (DATA_DIR, FEATURES_DIR, INDEX_DIR, BLOCK_FILES, KNOB_BLOCKS, BLOCK_LABELS,
+                     DEFAULT_WEIGHTS, WEIGHT_MAX, EXPLORE_TOP_N_TAGS, EXPLORE_RESULTS)
 
 # ───────────────────────────────────────────────────────────────────────────
 # Data loading (cached — runs once per server process)
@@ -66,7 +66,7 @@ def _find_parquet(name):
 @st.cache_resource
 def load_secondary_types():
     """album_id → (is_live, is_compilation). Returns None if file absent."""
-    from config import SECONDARY_TYPE_FILE
+    from .config import SECONDARY_TYPE_FILE
     path = _find_parquet(SECONDARY_TYPE_FILE)
     if not path:
         return None

@@ -5,10 +5,6 @@ Tabs:
   • Explore       — pick genre tags + filters → discover matching albums
 """
 
-import sys
-import os
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
 import html as _html
 
 import streamlit as st
@@ -16,15 +12,15 @@ import numpy as np
 import pandas as pd
 from streamlit_searchbox import st_searchbox
 
-from config import (BLOCK_FILES, KNOB_BLOCKS, BLOCK_LABELS,
-                    EXPLORE_TOP_N_TAGS, EXPLORE_RESULTS)
-from style import get_theme, inject_css, searchbox_styles, patch_searchbox_iframe
-from engine import (load_blocks, load_lookup, load_explore_data,
-                    load_secondary_types,
-                    make_artist_search, recommend, explore_search,
-                    get_album_info, per_block_similarity)
-from controls import (render_presets, render_auto_tune_buttons,
-                      render_controls, render_content_filters, get_weights)
+from app.config import (BLOCK_FILES, KNOB_BLOCKS, BLOCK_LABELS,
+                        EXPLORE_TOP_N_TAGS, EXPLORE_RESULTS)
+from app.style import get_theme, inject_css, searchbox_styles, patch_searchbox_iframe
+from app.engine import (load_blocks, load_lookup, load_explore_data,
+                        load_secondary_types,
+                        make_artist_search, recommend, explore_search,
+                        get_album_info, per_block_similarity)
+from app.controls import (render_presets, render_auto_tune_buttons,
+                          render_controls, render_content_filters, get_weights)
 
 # ═══════════════════════════════════════════════════════════════════════════
 # PAGE CONFIG (must be first Streamlit call)

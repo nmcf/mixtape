@@ -4,7 +4,7 @@ import os
 import streamlit as st
 import streamlit.components.v1 as components
 
-from config import (BLOCK_FILES, KNOB_BLOCKS, BLOCK_LABELS, BLOCK_BANDS,
+from .config import (BLOCK_FILES, KNOB_BLOCKS, BLOCK_LABELS, BLOCK_BANDS,
                     PRESETS, PRESET_NAMES, PRESET_DESCRIPTIONS,
                     DEFAULT_WEIGHTS, dial_to_weight, weight_to_dial,
                     LIVE_OPTIONS, COMP_OPTIONS, DEFAULT_LIVE, DEFAULT_COMP,
@@ -98,7 +98,7 @@ def reset_weights():
 
 
 def do_auto_tune(blocks, ssq, album_id_to_row):
-    from engine import auto_tune_profile, smart_auto_tune
+    from .engine import auto_tune_profile, smart_auto_tune
     aid = st.session_state.get('seed_album_id')
     if aid is None:
         st.session_state['flash'] = 'noseed'
